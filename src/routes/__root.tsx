@@ -29,14 +29,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Lightstack — Engineering Beyond Code" },
+      { name: "description", content: "Lightstack designs and engineers websites, mobile apps, and bespoke software systems for ambitious teams worldwide." },
+      { name: "author", content: "Lightstack" },
+      { property: "og:title", content: "Lightstack — Engineering Beyond Code" },
+      { property: "og:description", content: "Web, mobile, and custom software engineered with craft." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
