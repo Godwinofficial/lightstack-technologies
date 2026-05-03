@@ -10,7 +10,7 @@ export function ClientsSection() {
   return (
     <section
       id="clients"
-      className="relative flex min-h-screen snap-start flex-col justify-center px-5 py-28 md:px-16"
+      className="relative flex min-h-screen snap-start flex-col justify-start px-5 pt-28 pb-16 md:px-16 md:pt-32"
     >
       <SplitHeading
         accent="Valued"
@@ -18,7 +18,7 @@ export function ClientsSection() {
         as="h2"
         className="text-5xl md:text-7xl"
       />
-      <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-12 md:mt-20 md:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-12 md:mt-10 md:grid-cols-4">
         {clients.map((name) => (
           <div
             key={name}

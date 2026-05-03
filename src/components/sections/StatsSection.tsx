@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { SplitHeading } from "../SplitHeading";
 
 const stats = [
-  { label: "Projects Delivered", value: ">120", pct: 85 },
-  { label: "Lines of Code Shipped", value: ">2M", pct: 92 },
-  { label: "Active Users Served", value: ">500K", pct: 78 },
+  { label: "Projects Delivered", value: "15", pct: 85 },
+  { label: "Lines of Code Shipped", value: "1M", pct: 92 },
+  { label: "Active Users Served", value: "50K", pct: 78 },
   { label: "Uptime Maintained", value: "99.9%", pct: 99 },
 ];
 
@@ -41,7 +41,7 @@ export function StatsSection() {
         accent="Some of our"
         rest="statistics"
         as="h2"
-        className="text-4xl md:text-6xl"
+        className="text-5xl md:text-7xl"
       />
       <p className="mt-4 text-sm uppercase tracking-widest text-muted-foreground">
         Here is some of our key statistics

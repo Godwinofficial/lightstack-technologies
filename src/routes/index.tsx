@@ -89,7 +89,7 @@ function Index() {
       />
       <main
         ref={containerRef}
-        className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth"
+        className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth scroll-pt-1"
       >
         <HeroSection />
         <ServicesSection />
