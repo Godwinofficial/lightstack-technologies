@@ -24,37 +24,19 @@ export function HeroSection() {
 
       <div className="relative z-10 w-full max-w-5xl flex flex-col items-center text-center">
 
-        <motion.p
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-6 font-mono text-[11px] tracking-[0.3em] text-primary/80"
-        >
+        <p className="mb-6 font-mono text-[11px] tracking-[0.3em] text-primary/80">
           Engineering beyond code
-        </motion.p>
+        </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-6xl font-black leading-[0.9] tracking-tighter md:text-8xl lg:text-[10rem] italic mix-blend-plus-lighter text-foreground"
-        >
+        <h1 className="text-6xl font-black leading-[0.9] tracking-tighter md:text-8xl lg:text-[10rem] italic mix-blend-plus-lighter text-foreground">
           Light<span className="text-primary">stack</span>
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="mt-8 max-w-2xl text-lg md:text-2xl text-foreground/70 font-medium tracking-wide"
-        >
+        <p className="mt-8 max-w-2xl text-lg md:text-2xl text-foreground/70 font-medium tracking-wide">
           We craft scalable, high-performance digital solutions that elevate your business beyond standard software development.
-        </motion.p>
+        </p>
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+        <button
           type="button"
           className="group mt-16 flex flex-col items-center gap-4 text-foreground transition-transform hover:-translate-y-1"
         >
@@ -64,7 +46,7 @@ export function HeroSection() {
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-foreground/80 group-hover:text-primary transition-colors">
             Play Video Reel
           </span>
-        </motion.button>
+        </button>
 
       </div>
     </section>
