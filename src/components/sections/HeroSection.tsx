@@ -8,12 +8,7 @@ export function HeroSection() {
       className="relative flex min-h-screen snap-start items-center overflow-hidden px-5 pt-28 md:px-16 md:pt-32"
       style={{ background: "var(--gradient-hero)" }}
     >
-      {/* faded right-side accent shape */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-32 top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full blur-3xl"
-        style={{ background: "radial-gradient(closest-side, var(--primary) 0%, transparent 70%)", opacity: 0.18 }}
-      />
+
       <div className="relative z-10 max-w-4xl">
         <h1 className="text-6xl font-extrabold leading-[0.95] tracking-tight md:text-8xl">
           <span className="text-primary">Welcome,</span>

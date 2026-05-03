@@ -2,12 +2,7 @@ import { SplitHeading } from "../SplitHeading";
 
 const clients = [
   "NORTHWIND",
-  "CARGOFLOW",
-  "MERIDIAN",
-  "ATLAS",
-  "ORBIT",
   "VAULTKEEP",
-  "HELIO",
   "BLACKPINE",
 ];
 

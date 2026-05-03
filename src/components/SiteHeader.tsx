@@ -79,9 +79,9 @@ export function SiteHeader({ solid = false }: { solid?: boolean }) {
             ))}
           </nav>
           <div className="mt-auto pt-10 text-sm text-muted-foreground">
-            info@lightstack.io
+            godwinbanda19@gmail.com
             <br />
-            +1 (555) 010-0420
+            +260 973 848 066
           </div>
         </aside>
       </div>

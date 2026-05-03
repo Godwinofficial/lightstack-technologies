@@ -43,25 +43,23 @@ export function ContactSection() {
             className="text-5xl md:text-7xl"
           />
           <p className="mt-6 max-w-md text-sm uppercase tracking-widest text-muted-foreground">
-            340 Beacon Street, Suite 500
-            <br />
-            Boston, MA 02116, United States
+            Lusaka, Zambia
           </p>
 
           <div className="mt-10 space-y-4">
             <a
-              href="mailto:hello@lightstack.io"
+              href="mailto:godwinbanda19@gmail.com"
               className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
             >
               <Mail className="h-5 w-5 text-primary" />
-              hello@lightstack.io
+              godwinbanda19@gmail.com
             </a>
             <a
-              href="tel:+15550100420"
+              href="tel:+260973848066"
               className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
             >
               <Phone className="h-5 w-5 text-primary" />
-              +1 (555) 010-0420
+              +260 973 848 066
             </a>
           </div>
         </div>

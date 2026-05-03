@@ -23,7 +23,7 @@ export function Logo({ className = "" }: Props) {
         <div className="text-2xl font-extrabold italic tracking-tight text-foreground">
           Lightstack
         </div>
-        <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="mt-0.5 text-[7.2px] font-semibold uppercase tracking-wider text-muted-foreground">
           Engineering Beyond Code
         </div>
       </div>
