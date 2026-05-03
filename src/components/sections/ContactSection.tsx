@@ -19,7 +19,7 @@ export function ContactSection() {
   return (
     <section
       id="contact"
-      className="relative flex min-h-screen snap-start flex-col justify-center overflow-hidden px-5 py-28 md:px-16"
+      className="relative flex min-h-screen snap-start flex-col justify-start overflow-hidden px-5 pt-24 pb-28 md:px-16 md:pt-28"
     >
       <div
         aria-hidden
@@ -34,7 +34,8 @@ export function ContactSection() {
         <MapPin className="h-32 w-32 text-primary/30" strokeWidth={1.2} />
       </div>
 
-      <div className="relative z-10 grid gap-14 md:grid-cols-2 md:gap-20">
+      <div className="relative z-10 grid gap-10 md:grid-cols-2 md:gap-16">
+        {/* HQ Info */}
         <div>
           <SplitHeading
             accent="Lightstack"
@@ -42,28 +43,36 @@ export function ContactSection() {
             as="h2"
             className="text-5xl md:text-7xl"
           />
-          <p className="mt-6 max-w-md text-sm uppercase tracking-widest text-muted-foreground">
+          <p className="mt-4 text-sm uppercase tracking-widest text-muted-foreground">
             Lusaka, Zambia
           </p>
 
-          <div className="mt-10 space-y-4">
+          {/* Pill bar */}
+          <div className="mt-10 flex overflow-hidden rounded-xl border border-white/10">
             <a
               href="mailto:godwinbanda19@gmail.com"
-              className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
+              className="flex flex-1 items-center justify-center gap-2 border-r border-white/10 px-4 py-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              <Mail className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Send Email</span>
+              <Mail className="h-4 w-4 text-primary" />
+              Send Email
             </a>
             <a
               href="tel:+260973848066"
-              className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
+              className="flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              <Phone className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Call Us</span>
+              <Phone className="h-4 w-4 text-primary" />
+              Call Us
             </a>
+          </div>
+
+          {/* Address detail */}
+          <div className="mt-8 flex items-start gap-3 text-sm text-muted-foreground">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>Lusaka, Zambia — available for remote &amp; on-site projects worldwide.</span>
           </div>
         </div>
 
+        {/* Start a project form */}
         <form
           onSubmit={handleSubmit}
           className="rounded-lg border border-border bg-foreground/[0.04] p-6 backdrop-blur md:p-8"
@@ -89,7 +98,7 @@ export function ContactSection() {
             <textarea
               name="message"
               required
-              rows={4}
+              rows={3}
               placeholder="What are you building?"
               className="w-full resize-none rounded-md border border-border bg-background/40 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
