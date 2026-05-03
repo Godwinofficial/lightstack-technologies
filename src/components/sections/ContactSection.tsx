@@ -12,7 +12,7 @@ export function ContactSection() {
     setTimeout(() => {
       setSending(false);
       (e.target as HTMLFormElement).reset();
-      toast.success("Message sent — we'll be in touch within 24h.");
+      toast.success("Message sent, we'll be in touch within 24h.");
     }, 700);
   }
 
@@ -52,14 +52,14 @@ export function ContactSection() {
               className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
             >
               <Mail className="h-5 w-5 text-primary" />
-              godwinbanda19@gmail.com
+              <span className="font-semibold">Send Email</span>
             </a>
             <a
               href="tel:+260973848066"
               className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
             >
               <Phone className="h-5 w-5 text-primary" />
-              +260 973 848 066
+              <span className="font-semibold">Call Us</span>
             </a>
           </div>
         </div>
@@ -70,7 +70,7 @@ export function ContactSection() {
         >
           <h3 className="text-xl font-bold text-foreground">Start a project</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tell us about your idea — we reply within one business day.
+            Tell us about your idea, we reply within one business day.
           </p>
           <div className="mt-6 space-y-4">
             <input

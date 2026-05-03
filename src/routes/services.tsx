@@ -6,17 +6,17 @@ import { ServicesSection } from "@/components/sections/ServicesSection";
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Services — Lightstack" },
+      { title: "Services | Lightstack" },
       {
         name: "description",
         content:
           "Web development, mobile apps, custom software, and UI/UX design from Lightstack.",
       },
-      { property: "og:title", content: "Services — Lightstack" },
+      { property: "og:title", content: "Services | Lightstack" },
       {
         property: "og:description",
         content:
-          "From marketing sites to bespoke internal systems — explore what Lightstack builds.",
+          "From marketing sites to bespoke internal systems, explore what Lightstack builds.",
       },
     ],
   }),

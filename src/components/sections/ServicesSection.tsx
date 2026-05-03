@@ -5,7 +5,7 @@ const services = [
   {
     icon: Code2,
     title: "WEB DEVELOPMENT",
-    body: "We design and build performant websites and web apps — from marketing sites to complex SaaS platforms — engineered to scale with your business.",
+    body: "We design and build performant websites and web apps, from marketing sites to complex SaaS platforms, engineered to scale with your business.",
   },
   {
     icon: Smartphone,

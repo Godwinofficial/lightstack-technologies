@@ -15,13 +15,13 @@ import { ContactSection } from "@/components/sections/ContactSection";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Lightstack — Engineering Beyond Code" },
+      { title: "Lightstack Engineering Beyond Code" },
       {
         name: "description",
         content:
           "Lightstack designs and engineers websites, mobile apps, and bespoke software systems for ambitious teams worldwide.",
       },
-      { property: "og:title", content: "Lightstack — Engineering Beyond Code" },
+      { property: "og:title", content: "Lightstack Engineering Beyond Code" },
       {
         property: "og:description",
         content:

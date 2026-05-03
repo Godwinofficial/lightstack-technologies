@@ -7,13 +7,13 @@ import { ClientsSection } from "@/components/sections/ClientsSection";
 export const Route = createFileRoute("/portfolio")({
   head: () => ({
     meta: [
-      { title: "Portfolio — Lightstack" },
+      { title: "Portfolio | Lightstack" },
       {
         name: "description",
         content:
           "A selection of fintech, logistics, health, and SaaS products engineered by Lightstack.",
       },
-      { property: "og:title", content: "Portfolio — Lightstack" },
+      { property: "og:title", content: "Portfolio | Lightstack" },
       {
         property: "og:description",
         content: "Explore recent Lightstack projects and valued clients.",

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Mail, Phone } from "lucide-react";
 import { Logo } from "./Logo";
 
 const links = [
@@ -78,10 +78,21 @@ export function SiteHeader({ solid = false }: { solid?: boolean }) {
               </Link>
             ))}
           </nav>
-          <div className="mt-auto pt-10 text-sm text-muted-foreground">
-            godwinbanda19@gmail.com
-            <br />
-            +260 973 848 066
+          <div className="mt-auto pt-10 flex flex-col gap-3 text-sm text-muted-foreground">
+            <a
+              href="mailto:godwinbanda19@gmail.com"
+              className="flex items-center gap-2 transition-colors hover:text-primary"
+            >
+              <Mail className="h-4 w-4 text-primary" />
+              <span className="font-semibold">Send Email</span>
+            </a>
+            <a
+              href="tel:+260973848066"
+              className="flex items-center gap-2 transition-colors hover:text-primary"
+            >
+              <Phone className="h-4 w-4 text-primary" />
+              <span className="font-semibold">Call Us</span>
+            </a>
           </div>
         </aside>
       </div>

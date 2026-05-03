@@ -7,13 +7,13 @@ import { StatsSection } from "@/components/sections/StatsSection";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — Lightstack" },
+      { title: "About | Lightstack" },
       {
         name: "description",
         content:
           "Lightstack is a software engineering studio building production systems for teams across three continents.",
       },
-      { property: "og:title", content: "About — Lightstack" },
+      { property: "og:title", content: "About | Lightstack" },
       {
         property: "og:description",
         content:

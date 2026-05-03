@@ -7,16 +7,16 @@ import { Toaster } from "@/components/ui/sonner";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Lightstack" },
+      { title: "Contact | Lightstack" },
       {
         name: "description",
         content:
           "Get in touch with Lightstack to start your next web, mobile, or custom software project.",
       },
-      { property: "og:title", content: "Contact — Lightstack" },
+      { property: "og:title", content: "Contact | Lightstack" },
       {
         property: "og:description",
-        content: "Reach the Lightstack team — we reply within one business day.",
+        content: "Reach the Lightstack team, we reply within one business day.",
       },
     ],
   }),

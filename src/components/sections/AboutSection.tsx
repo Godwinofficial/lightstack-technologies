@@ -21,7 +21,7 @@ export function AboutSection() {
             OUR VISION
           </h3>
           <p className="mt-4 text-lg italic leading-relaxed text-muted-foreground">
-            To be the most trusted engineering partner for ambitious teams —
+            To be the most trusted engineering partner for ambitious teams,
             relentless in our pursuit of craft, clarity, and outcomes that
             outlast the brief.
           </p>
@@ -34,7 +34,7 @@ export function AboutSection() {
           <p className="mt-4 text-lg italic leading-relaxed text-muted-foreground">
             From fintech platforms to logistics systems, Lightstack has shipped
             production software for clients across North America, Europe, and
-            Africa — with a growing roster of partners every quarter.
+            Africa, with a growing roster of partners every quarter.
           </p>
         </div>
       </div>
