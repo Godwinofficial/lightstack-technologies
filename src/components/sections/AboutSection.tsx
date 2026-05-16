@@ -99,12 +99,12 @@ export function AboutSection() {
               READY TO <br />
               <span className="text-primary">ARCHITECT?</span>
             </h2>
-            <button 
-              onClick={(e) => e.preventDefault()}
+            <a 
+              href="tel:+260973848066"
               className="px-12 py-6 bg-primary text-white font-black text-sm uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-4"
             >
-              Get an Estimate <ArrowUpRight className="w-5 h-5" />
-            </button>
+              Call Now <ArrowUpRight className="w-5 h-5" />
+            </a>
           </div>
         </div>
 

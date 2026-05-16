@@ -32,9 +32,9 @@ export function ContactSection() {
 
           <div className="flex flex-col gap-8">
             <div className="flex items-center gap-6">
-              <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
+              {/* <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
                 <Mail className="h-6 w-6" />
-              </div>
+              </div> */}
               {/* <a href="mailto:godwinbanda19@gmail.com" className="text-2xl font-black text-[#001c4a] hover:text-[#007bff] transition-colors">
                 godwinbanda19@gmail.com
               </a> */}

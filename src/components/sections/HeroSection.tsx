@@ -88,16 +88,16 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-start sm:items-center gap-8 mt-6"
           >
-            <button
-              onClick={(e) => e.preventDefault()}
-              className="group relative px-10 py-5 bg-foreground text-background font-bold rounded-none overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-95"
+            <a 
+              href="tel:+260973848066"
+              className="group relative px-12 py-6 bg-foreground text-background font-black text-sm uppercase tracking-widest overflow-hidden transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                START A PROJECT
-                <ArrowUpRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+              <span className="relative z-10 flex items-center gap-3">
+                Call Now
+                <ArrowUpRight className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
               </span>
-              <div className="absolute inset-0 bg-primary translate-y-full transition-transform duration-300 group-hover:translate-y-0"></div>
-            </button>
+              <div className="absolute inset-0 bg-primary translate-y-full transition-transform duration-500 group-hover:translate-y-0"></div>
+            </a>
 
             <button
               onClick={(e) => e.preventDefault()}

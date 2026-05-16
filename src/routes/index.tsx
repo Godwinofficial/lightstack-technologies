@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { DotNav } from "@/components/DotNav";
+
 import { Toaster } from "@/components/ui/sonner";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { PartnersSection } from "@/components/sections/PartnersSection";
@@ -39,70 +39,24 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const SECTIONS = [
-  "Home",
-  "Partners",
-  "Principles",
-  "Differences",
-  "Stats",
-  "Why Us",
-  "Values",
-  "Governance",
-  "Trust",
-  "Estimate",
 
-  "Services",
-  "Industries",
-  "Portfolio",
-  "Stories",
-  "Blog",
-  "Reviews",
-  "FAQ",
-  "Contact",
-  "Explore",
-];
 
 function Index() {
-  const [active, setActive] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const sections = Array.from(document.querySelectorAll<HTMLElement>("section"));
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = sections.indexOf(e.target as HTMLElement);
-            if (idx >= 0) setActive(idx);
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-    sections.forEach((s) => io.observe(s));
-    
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      io.disconnect();
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
-  function jump(i: number) {
-    const sections = document.querySelectorAll<HTMLElement>("section");
-    sections[i]?.scrollIntoView({ behavior: "smooth" });
-  }
+
 
   return (
     <div className="relative min-h-screen bg-white text-[#001c4a] font-sans">
       <SiteHeader solid={scrolled} />
-      <DotNav
-        count={SECTIONS.length}
-        active={active}
-        onJump={jump}
-        labels={SECTIONS}
-      />
       <main className="flex flex-col">
         <HeroSection />
         <PartnersSection />

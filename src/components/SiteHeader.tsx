@@ -40,12 +40,12 @@ export function SiteHeader({ solid = false }: { solid?: boolean }) {
           </div>
 
           <div className="flex items-center gap-6">
-            <button
-              onClick={(e) => e.preventDefault()}
+            <a
+              href="tel:+260973848066"
               className="hidden lg:flex items-center gap-2 px-6 py-3 bg-primary text-white text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95"
             >
-              Book a Call
-            </button>
+              Call Now
+            </a>
 
             <a
               href="mailto:godwinbanda19@gmail.com"
