@@ -13,7 +13,7 @@ import { WhyUsSection } from "@/components/sections/WhyUsSection";
 import { ValuesSection } from "@/components/sections/ValuesSection";
 import { GovernanceSection } from "@/components/sections/GovernanceSection";
 import { ComplianceSection } from "@/components/sections/ComplianceSection";
-import { EstimationSection } from "@/components/sections/EstimationSection";
+
 
 import { ServicesSection } from "@/components/sections/ServicesSection";
 import { IndustriesSection } from "@/components/sections/IndustriesSection";
@@ -67,7 +67,7 @@ function Index() {
         <ValuesSection />
         <GovernanceSection />
         <ComplianceSection />
-        <EstimationSection />
+
 
         <ServicesSection />
         <IndustriesSection />
