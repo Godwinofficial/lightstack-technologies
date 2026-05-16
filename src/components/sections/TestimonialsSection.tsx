@@ -50,7 +50,7 @@ export function TestimonialsSection() {
           <ReviewsSummary />
           <h2 className="text-5xl md:text-8xl font-black text-foreground leading-[0.9] tracking-tighter uppercase max-w-4xl">
             TRUST FROM <br />
-            <span className="text-muted-foreground/30">LEADERS.</span>
+            <span className="text-muted-foreground/30">COMPANIES.</span>
           </h2>
         </div>
 
@@ -66,12 +66,12 @@ export function TestimonialsSection() {
                 className="relative p-12 md:p-20 bg-white border border-border shadow-2xl"
               >
                 {/* Top Industrial Detail */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-2 bg-foreground text-background text-[10px] font-black uppercase tracking-[0.5em] whitespace-nowrap">
+                {/* <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-2 bg-foreground text-background text-[10px] font-black uppercase tracking-[0.5em] whitespace-nowrap">
                   Client Testimony PRTC-0{index + 1}
-                </div>
+                </div> */}
 
                 <Quote className="h-16 w-16 text-primary/10 mb-12" fill="currentColor" />
-                
+
                 <blockquote className="text-2xl md:text-4xl font-black text-foreground leading-[1.1] tracking-tight mb-16 h-auto md:h-[200px] flex items-center">
                   "{testimonials[index].quote}"
                 </blockquote>
@@ -87,8 +87,8 @@ export function TestimonialsSection() {
                     </div>
                   </div>
 
-                  <a 
-                    href="#" 
+                  <a
+                    href="#"
                     onClick={(e) => e.preventDefault()}
                     className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-primary"
                   >
@@ -103,8 +103,8 @@ export function TestimonialsSection() {
 
           <div className="mt-16 flex justify-center gap-2">
             {testimonials.map((_, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={`h-1 transition-all duration-500 ${i === index ? 'bg-primary w-16' : 'bg-border w-10'}`}
               />
             ))}

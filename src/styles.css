@@ -65,7 +65,7 @@
 
 :root {
   --radius: 0rem;
-  /* SumatoSoft inspired palette */
+  /* Lightstack design system */
   --background: oklch(1 0 0);
   --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);

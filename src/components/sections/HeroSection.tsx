@@ -79,7 +79,7 @@ export function HeroSection() {
             className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed font-medium"
           >
             Lightstack is an elite engineering collective specializing in high-performance AI systems,
-            bespoke cloud architectures, and scalable digital ecosystems for enterprise leaders.
+            bespoke cloud architectures, and scalable digital ecosystems for companies.
           </motion.p>
 
           <motion.div

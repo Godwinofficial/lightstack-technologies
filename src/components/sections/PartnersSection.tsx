@@ -15,7 +15,7 @@ export function PartnersSection() {
   return (
     <section className="py-20 bg-white border-b border-border overflow-hidden">
       <div className="mb-8 px-6 md:px-10 max-w-[1400px] mx-auto">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Trusted by Global Leaders</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Trusted by companies</p>
       </div>
       
       <div className="relative flex overflow-x-hidden">

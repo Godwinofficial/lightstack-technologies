@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Check, Brain, Shield, Zap, Cpu, DollarSign, Lightbulb, Workflow, Target, Binary } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Brain, Shield, DollarSign, Lightbulb, Workflow, Target, Binary } from "lucide-react";
 import { useState } from "react";
 
 const principles = [
@@ -154,20 +154,26 @@ export function PrinciplesSection() {
                     </div>
                   </button>
 
-                  <motion.div 
-                    initial={false}
-                    animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-8 pb-8 pt-4 ml-20 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {p.content.map((item, i) => (
-                        <div key={i} className="flex items-start gap-3 group/item">
-                          <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          <span className="text-sm text-foreground/80 font-medium">{item}</span>
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-8 pb-8 pt-4 ml-20 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {p.content.map((item, i) => (
+                            <div key={i} className="flex items-start gap-3 group/item">
+                              <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                              <span className="text-sm text-foreground/80 font-medium">{item}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}

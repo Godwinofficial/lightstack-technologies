@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { ArrowUpRight, Cpu, Code2, Layers, Zap, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, Cpu, Code2, Layers, ChevronRight, Smartphone, Globe } from "lucide-react";
 import { useState } from "react";
 
 const services = [
@@ -17,15 +17,15 @@ const services = [
   },
   {
     id: "SRV-03",
-    title: "High-Performance Web",
-    desc: "Bespoke digital ecosystems engineered with precision. From complex CRMs to specialized industrial tools, we build software that delivers measurable ROI.",
-    icon: <Code2 className="w-8 h-8" />
+    title: "Web Development",
+    desc: "Bespoke digital ecosystems engineered with precision. From complex enterprise portals to specialized industrial web tools, we build software that delivers measurable ROI.",
+    icon: <Globe className="w-8 h-8" />
   },
   {
     id: "SRV-04",
-    title: "IoT & Real-time Ops",
-    desc: "Synchronizing hardware and software at scale. We develop secure IoT protocols and predictive maintenance systems for industrial and energy sectors.",
-    icon: <Zap className="w-8 h-8" />
+    title: "Mobile App Development",
+    desc: "Engineering high-performance iOS and Android applications with native-level precision. We build secure, offline-first mobile ecosystems that integrate deeply with your enterprise stack.",
+    icon: <Smartphone className="w-8 h-8" />
   }
 ];
 
@@ -95,20 +95,26 @@ export function ServicesSection() {
                   </div>
                 </div>
 
-                <motion.div
-                  initial={false}
-                  animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-12 md:pl-32 max-w-4xl">
-                    <p className="text-xl text-white/60 font-medium leading-relaxed mb-8">
-                      {service.desc}
-                    </p>
-                    <button className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-primary hover:text-white transition-colors group/btn">
-                      Explore Technical Specs <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                    </button>
-                  </div>
-                </motion.div>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-12 md:pl-32 max-w-4xl">
+                        <p className="text-xl text-white/60 font-medium leading-relaxed mb-8">
+                          {service.desc}
+                        </p>
+                        <button className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-primary hover:text-white transition-colors group/btn">
+                          Explore Technical Specs <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}
