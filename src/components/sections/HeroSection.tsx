@@ -65,10 +65,10 @@ export function HeroSection() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col text-[16vw] md:text-[8rem] font-black text-foreground leading-[0.8] tracking-tighter md:tracking-tightest uppercase"
           >
-            <span className="block">WE BUILD</span>
-            <span className="block text-primary">SOFTWARE</span>
+            <span className="block">SOFTWARE</span>
+            <span className="block text-primary">BUILT FOR</span>
             <span className="block">
-              STACK<span className="text-primary">.</span>
+              SCALE<span className="text-primary">.</span>
             </span>
           </motion.h1>
 
@@ -78,8 +78,7 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed font-medium"
           >
-            Lightstack is an elite engineering collective specializing in high-performance AI systems,
-            bespoke cloud architectures, and scalable digital ecosystems for companies.
+            Lightstack is a high level engineering collective creating intelligent AI systems, custom cloud infrastructure, and powerful digital platforms built to help companies grow and operate at scale.
           </motion.p>
 
           <motion.div
@@ -88,7 +87,7 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-start sm:items-center gap-8 mt-6"
           >
-            <a 
+            <a
               href="tel:+260973848066"
               className="group relative px-12 py-6 bg-foreground text-background font-black text-sm uppercase tracking-widest overflow-hidden transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
             >
