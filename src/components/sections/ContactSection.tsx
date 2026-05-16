@@ -19,97 +19,85 @@ export function ContactSection() {
   return (
     <section
       id="contact"
-      className="relative flex min-h-screen snap-start flex-col justify-start overflow-hidden px-5 pt-24 pb-28 md:px-16 md:pt-28"
+      className="relative flex flex-col justify-center px-6 py-48 md:px-20 bg-white"
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-15"
-        style={{
-          backgroundImage:
-            "linear-gradient(oklch(0.5 0.04 250) 1px, transparent 1px), linear-gradient(90deg, oklch(0.5 0.04 250) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
-      <div className="absolute right-10 top-1/2 hidden -translate-y-1/2 md:block">
-        <MapPin className="h-32 w-32 text-primary/30" strokeWidth={1.2} />
-      </div>
-
-      <div className="relative z-10 grid gap-10 md:grid-cols-2 md:gap-16">
-        {/* HQ Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 max-w-[1400px] mx-auto w-full">
         <div>
-          <SplitHeading
-            accent="Lightstack"
-            rest="HQ"
-            as="h2"
-            className="text-5xl md:text-7xl"
-          />
-          <p className="mt-4 text-sm uppercase tracking-widest text-muted-foreground">
-            Lusaka, Zambia
+          <h2 className="text-5xl md:text-8xl font-black leading-tight text-[#001c4a] mb-10 tracking-tighter uppercase">
+            LET'S <span className="text-[#007bff]">TALK.</span>
+          </h2>
+          <p className="text-xl text-[#001c4a]/60 leading-relaxed max-w-md mb-12 font-medium">
+            Have a project in mind? We'd love to hear about it. Our team in Lusaka is ready to help you scale.
           </p>
 
-          {/* Pill bar */}
-          <div className="mt-10 flex overflow-hidden rounded-xl border border-white/10">
-            <a
-              href="mailto:godwinbanda19@gmail.com"
-              className="flex flex-1 items-center justify-center gap-2 border-r border-white/10 px-4 py-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <Mail className="h-4 w-4 text-primary" />
-              Send Email
-            </a>
-            <a
-              href="tel:+260973848066"
-              className="flex flex-1 items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <Phone className="h-4 w-4 text-primary" />
-              Call Us
-            </a>
-          </div>
-
-          {/* Address detail */}
-          <div className="mt-8 flex items-start gap-3 text-sm text-muted-foreground">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>Lusaka, Zambia — available for remote &amp; on-site projects worldwide.</span>
+          <div className="flex flex-col gap-8">
+            <div className="flex items-center gap-6">
+              <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
+                <Mail className="h-6 w-6" />
+              </div>
+              {/* <a href="mailto:godwinbanda19@gmail.com" className="text-2xl font-black text-[#001c4a] hover:text-[#007bff] transition-colors">
+                godwinbanda19@gmail.com
+              </a> */}
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
+                <Phone className="h-6 w-6" />
+              </div>
+              <a href="tel:+260973848066" className="text-2xl font-black text-[#001c4a] hover:text-[#007bff] transition-colors">
+                +260 973 848 066
+              </a>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
+                <MapPin className="h-6 w-6" />
+              </div>
+              <span className="text-2xl font-black text-[#001c4a]/40">
+                Lusaka, Zambia
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Start a project form */}
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-lg border border-border bg-foreground/[0.04] p-6 backdrop-blur md:p-8"
-        >
-          <h3 className="text-xl font-bold text-foreground">Start a project</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tell us about your idea, we reply within one business day.
-          </p>
-          <div className="mt-6 space-y-4">
-            <input
-              name="name"
-              required
-              placeholder="Your name"
-              className="w-full rounded-md border border-border bg-background/40 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-            />
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="Email address"
-              className="w-full rounded-md border border-border bg-background/40 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-            />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-8 bg-muted/30 p-8 md:p-12 border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex flex-col gap-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[#001c4a]/40">Full Name</label>
+              <input
+                name="name"
+                required
+                placeholder="E.g. Chileshe Mulenga"
+                className="w-full border-b border-[#001c4a]/20 bg-transparent py-4 text-lg font-bold text-[#001c4a] outline-none transition-colors focus:border-[#007bff] placeholder:text-[#001c4a]/20"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[#001c4a]/40">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="name@company.com"
+                className="w-full border-b border-[#001c4a]/20 bg-transparent py-4 text-lg font-bold text-[#001c4a] outline-none transition-colors focus:border-[#007bff] placeholder:text-[#001c4a]/20"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-[#001c4a]/40">Project Brief</label>
             <textarea
               name="message"
               required
-              rows={3}
-              placeholder="What are you building?"
-              className="w-full resize-none rounded-md border border-border bg-background/40 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              rows={4}
+              placeholder="Tell us about your requirements..."
+              className="w-full border-b border-[#001c4a]/20 bg-transparent py-4 text-lg font-bold text-[#001c4a] outline-none transition-colors focus:border-[#007bff] resize-none placeholder:text-[#001c4a]/20"
             />
-            <button
-              type="submit"
-              disabled={sending}
-              className="w-full rounded-md bg-primary px-5 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-glow disabled:opacity-60"
-            >
-              {sending ? "Sending…" : "Send message"}
-            </button>
           </div>
+          <button
+            type="submit"
+            disabled={sending}
+            className="group mt-4 flex items-center justify-center gap-4 w-full md:w-fit px-12 py-6 bg-primary text-white font-black uppercase tracking-widest text-xs transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60"
+          >
+            {sending ? "Transmitting..." : "Send Brief"}
+            <span className="w-2 h-2 bg-white rounded-full group-hover:animate-ping"></span>
+          </button>
         </form>
       </div>
     </section>

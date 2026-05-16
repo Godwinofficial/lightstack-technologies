@@ -22,10 +22,10 @@ export function DotNav({ count, active, onJump, labels }: Props) {
             className="group relative flex h-3 w-3 items-center justify-center"
           >
             <span
-              className={`block rounded-full transition-all ${
+              className={`block rounded-full transition-all duration-300 ${
                 isActive
-                  ? "h-3 w-3 bg-primary shadow-[0_0_12px_var(--primary)]"
-                  : "h-2 w-2 bg-foreground/60 group-hover:bg-foreground"
+                  ? "h-4 w-4 bg-[#007bff] shadow-[0_0_15px_rgba(0,123,255,0.4)] scale-110"
+                  : "h-2 w-2 bg-[#001c4a]/20 group-hover:bg-[#001c4a]/40"
               }`}
             />
             {labels?.[i] && (

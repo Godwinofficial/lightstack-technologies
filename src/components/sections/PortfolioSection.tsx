@@ -1,123 +1,71 @@
-import { ArrowUpRight, Clock } from "lucide-react";
-import { SplitHeading } from "../SplitHeading";
+import { ChevronRight } from "lucide-react";
 
-interface Project {
-  name: string;
-  category: string;
-  description: string;
-  color: string;
-  live?: boolean;
-  url?: string;
-}
-
-const projects: Project[] = [
+const caseStudies = [
   {
-    name: "ZELLION HOMES",
-    category: "Real Estate & Short Stays",
-    description:
-      "A premium platform for discovering and booking digital houses and short-stay accommodations nearby.",
-    color: "oklch(0.68 0.19 45)",
-    live: true,
-    url: "https://zellionhomes.com",
+    title: "IoT- and ML-based predictive wind farm maintenance",
+    description: "The wind farm operator was experiencing unexpected failures in gearboxes and generators. We developed a predictive maintenance system based on IoT and machine learning that helps identify issues early and reduce downtime.",
+    tags: ["IoT", "AI inside", "Enterprise"],
+    color: "#001c4a",
+    badge: "AI-powered stack"
   },
   {
-    name: "SAVE ME A SEAT ZAMBIA",
-    category: "Digital Invitations Platform",
-    description:
-      "Elegant digital invitation experiences for corporate events, weddings, birthdays, and every celebration in between.",
-    color: "oklch(0.7 0.16 150)",
-    live: true,
-    url: "https://savemeaseatzambia.com",
+    title: "Graphical user interface for robot operation",
+    description: "SumatoSoft developed a graphic user interface (GUI) that helps to communicate with the robot Alfred, an automated robotic arm.",
+    tags: ["IoT", "Startups"],
+    color: "#0056b3",
+    badge: "Traditional tech stack"
   },
   {
-    name: "SCHOOL MANAGEMENT SYSTEM",
-    category: "EdTech / SaaS",
-    description:
-      "A comprehensive platform for managing students, staff, grades, timetables, and school operations end-to-end.",
-    color: "oklch(0.65 0.18 200)",
-    live: false,
-  },
-  {
-    name: "CRYPTO SYSTEM",
-    category: "Fintech / Web3",
-    description:
-      "A secure, full-featured crypto trading and asset management system built for modern digital finance.",
-    color: "oklch(0.72 0.18 320)",
-    live: false,
-  },
+    title: "Customer engagement platform for a leading retailer",
+    description: "The client needed a scalable solution to handle millions of customer interactions and provide personalized recommendations in real-time.",
+    tags: ["Retail", "AI-driven", "Cloud"],
+    color: "#4e73df",
+    badge: "AI-powered stack"
+  }
 ];
 
 export function PortfolioSection() {
   return (
     <section
       id="portfolio"
-      className="relative flex min-h-screen snap-start flex-col justify-center px-5 py-28 md:px-16"
+      className="relative flex flex-col justify-center px-6 py-48 md:px-20 bg-[#f8f9fa]"
     >
-      <SplitHeading
-        accent="Past"
-        rest="projects"
-        as="h2"
-        className="text-5xl md:text-7xl"
-      />
-      <div className="mt-14 grid gap-6 md:mt-20 md:grid-cols-2">
-        {projects.map((p) => {
-          const Card = (
-            <article
-              key={p.name}
-              className="group relative cursor-pointer overflow-hidden rounded-lg border border-border bg-foreground/[0.03] p-6 transition-all hover:-translate-y-1 hover:border-primary/60 hover:shadow-[var(--shadow-glow)]"
-            >
-              {/* colour bar */}
-              <div
-                className="mb-6 h-1.5 w-14 rounded-full"
-                style={{ backgroundColor: p.color }}
-              />
-
-              {/* live / coming-soon badge */}
-              {p.live ? (
-                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-emerald-400">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  </span>
-                  Live
+      <div className="flex overflow-x-auto gap-8 pb-10 no-scrollbar">
+        {caseStudies.map((cs, i) => (
+          <div 
+            key={cs.title} 
+            className="min-w-[320px] md:min-w-[600px] p-10 rounded-lg text-white flex flex-col gap-6 shadow-xl"
+            style={{ backgroundColor: cs.color }}
+          >
+            <span className="px-4 py-1.5 rounded bg-white/10 text-xs font-bold uppercase tracking-widest self-start">
+              {cs.badge}
+            </span>
+            <h3 className="text-3xl md:text-5xl font-bold leading-tight">
+              {cs.title}
+            </h3>
+            <p className="text-lg text-white/70 leading-relaxed">
+              {cs.description}
+            </p>
+            <div className="flex gap-3 mt-auto">
+              {cs.tags.map(tag => (
+                <span key={tag} className="px-4 py-2 rounded bg-white/10 text-xs font-bold">
+                  {tag}
                 </span>
-              ) : (
-                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-muted-foreground/20 bg-muted-foreground/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  Coming Soon
-                </span>
-              )}
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
 
-              <h3 className="mt-1 text-xl font-extrabold tracking-wide text-primary">
-                {p.name}
-              </h3>
-              <p className="mt-1 text-xs font-medium uppercase tracking-widest text-primary/50">
-                {p.category}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {p.description}
-              </p>
+      <div className="mt-10 flex flex-col items-center gap-10">
+        {/* Slider dots simulation */}
+        <div className="flex gap-2 h-1 w-48 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full w-1/3 bg-[#007bff]"></div>
+        </div>
 
-              {p.live && (
-                <ArrowUpRight className="absolute right-5 top-5 h-5 w-5 text-foreground/30 transition-all group-hover:text-primary" />
-              )}
-            </article>
-          );
-
-          return p.live && p.url ? (
-            <a
-              key={p.name}
-              href={p.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              {Card}
-            </a>
-          ) : (
-            <div key={p.name}>{Card}</div>
-          );
-        })}
+        <a href="#" className="flex items-center gap-2 text-[#007bff] font-bold text-2xl hover:underline decoration-2 underline-offset-8">
+          View all cases <ChevronRight className="h-6 w-6" />
+        </a>
       </div>
     </section>
   );

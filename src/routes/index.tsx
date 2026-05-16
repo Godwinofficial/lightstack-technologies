@@ -1,31 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DotNav } from "@/components/DotNav";
 import { Toaster } from "@/components/ui/sonner";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { ServicesSection } from "@/components/sections/ServicesSection";
-import { AboutSection } from "@/components/sections/AboutSection";
+import { PartnersSection } from "@/components/sections/PartnersSection";
+import { PrinciplesSection } from "@/components/sections/PrinciplesSection";
+import { ComparisonSection } from "@/components/sections/ComparisonSection";
 import { StatsSection } from "@/components/sections/StatsSection";
+import { WhyUsSection } from "@/components/sections/WhyUsSection";
+import { ValuesSection } from "@/components/sections/ValuesSection";
+import { GovernanceSection } from "@/components/sections/GovernanceSection";
+import { ComplianceSection } from "@/components/sections/ComplianceSection";
+import { EstimationSection } from "@/components/sections/EstimationSection";
+
+import { ServicesSection } from "@/components/sections/ServicesSection";
+import { IndustriesSection } from "@/components/sections/IndustriesSection";
 import { PortfolioSection } from "@/components/sections/PortfolioSection";
-import { ClientsSection } from "@/components/sections/ClientsSection";
+import { StoriesSection } from "@/components/sections/StoriesSection";
+import { BlogListSection } from "@/components/sections/BlogListSection";
+import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
+import { FaqSection } from "@/components/sections/FaqSection";
 import { ContactSection } from "@/components/sections/ContactSection";
+import { MoreAboutSection } from "@/components/sections/MoreAboutSection";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Lightstack Engineering Beyond Code" },
+      { title: "Lightstack | AI-Powered Custom Software Development Company" },
       {
         name: "description",
         content:
-          "Lightstack designs and engineers websites, mobile apps, and bespoke software systems for ambitious teams worldwide.",
-      },
-      { property: "og:title", content: "Lightstack Engineering Beyond Code" },
-      {
-        property: "og:description",
-        content:
-          "Web, mobile, and custom software engineered with craft. Explore Lightstack's portfolio.",
+          "Lightstack designs and engineers AI-powered custom software, mobile apps, and bespoke systems for ambitious teams worldwide.",
       },
     ],
   }),
@@ -34,23 +41,33 @@ export const Route = createFileRoute("/")({
 
 const SECTIONS = [
   "Home",
+  "Partners",
+  "Principles",
+  "Differences",
+  "Stats",
+  "Why Us",
+  "Values",
+  "Governance",
+  "Trust",
+  "Estimate",
+
   "Services",
-  "About",
-  "Statistics",
+  "Industries",
   "Portfolio",
-  "Clients",
+  "Stories",
+  "Blog",
+  "Reviews",
+  "FAQ",
   "Contact",
+  "Explore",
 ];
 
 function Index() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const root = containerRef.current;
-    if (!root) return;
-    const sections = Array.from(root.querySelectorAll<HTMLElement>("section"));
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("section"));
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -60,26 +77,25 @@ function Index() {
           }
         });
       },
-      { root, threshold: 0.55 }
+      { threshold: 0.15 }
     );
     sections.forEach((s) => io.observe(s));
-    const onScroll = () => setScrolled((root.scrollTop ?? 0) > 40);
-    root.addEventListener("scroll", onScroll, { passive: true });
+    
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       io.disconnect();
-      root.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
   function jump(i: number) {
-    const root = containerRef.current;
-    if (!root) return;
-    const sections = root.querySelectorAll<HTMLElement>("section");
+    const sections = document.querySelectorAll<HTMLElement>("section");
     sections[i]?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-white text-[#001c4a] font-sans">
       <SiteHeader solid={scrolled} />
       <DotNav
         count={SECTIONS.length}
@@ -87,20 +103,30 @@ function Index() {
         onJump={jump}
         labels={SECTIONS}
       />
-      <main
-        ref={containerRef}
-        className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth scroll-pt-1"
-      >
+      <main className="flex flex-col">
         <HeroSection />
-        <ServicesSection />
-        <AboutSection />
+        <PartnersSection />
+        <PrinciplesSection />
+        <ComparisonSection />
         <StatsSection />
+        <WhyUsSection />
+        <ValuesSection />
+        <GovernanceSection />
+        <ComplianceSection />
+        <EstimationSection />
+
+        <ServicesSection />
+        <IndustriesSection />
         <PortfolioSection />
-        <ClientsSection />
+        <StoriesSection />
+        <BlogListSection />
+        <TestimonialsSection />
+        <FaqSection />
         <ContactSection />
+        <MoreAboutSection />
+        <SiteFooter />
       </main>
-      <SiteFooter />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
     </div>
   );
 }
