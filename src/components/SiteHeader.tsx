@@ -48,7 +48,7 @@ export function SiteHeader({ solid = false }: { solid?: boolean }) {
             </a>
 
             <a
-              href="mailto:godwinbanda19@gmail.com"
+              href="mailto:contact@lightstackgroup.com"
               className="flex h-12 w-12 items-center justify-center transition-all hover:scale-110 active:scale-95 text-primary"
             >
               <Mail className="h-6 w-6" />
@@ -111,8 +111,8 @@ export function SiteHeader({ solid = false }: { solid?: boolean }) {
           <div className="mt-auto">
             <p className="text-sm font-medium uppercase tracking-widest text-[#001c4a]/40 mb-6">Connect with us</p>
             <div className="flex flex-col gap-4">
-              <a href="mailto:godwinbanda19@gmail.com" className="text-xl font-bold text-[#001c4a] hover:text-[#007bff] transition-colors">
-                godwinbanda19@gmail.com
+              <a href="mailto:contact@lightstackgroup.com" className="text-xl font-bold text-[#001c4a] hover:text-[#007bff] transition-colors">
+                contact@lightstackgroup.com
               </a>
               <a href="tel:+260973848066" className="text-xl font-bold text-[#001c4a] hover:text-[#007bff] transition-colors">
                 +260 973 848 066

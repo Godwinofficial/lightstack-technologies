@@ -35,8 +35,8 @@ export function ContactSection() {
               {/* <div className="h-16 w-16 bg-[#007bff]/5 flex items-center justify-center text-[#007bff] border border-[#007bff]/10">
                 <Mail className="h-6 w-6" />
               </div> */}
-              {/* <a href="mailto:godwinbanda19@gmail.com" className="text-2xl font-black text-[#001c4a] hover:text-[#007bff] transition-colors">
-                godwinbanda19@gmail.com
+              {/* <a href="mailto:contact@lightstackgroup.com" className="text-2xl font-black text-[#001c4a] hover:text-[#007bff] transition-colors">
+                contact@lightstackgroup.com
               </a> */}
             </div>
             <div className="flex items-center gap-6">

@@ -55,7 +55,7 @@ export function SiteFooter() {
                 <p className="text-2xl font-black tracking-tight text-white">Lusaka Node</p>
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Direct Briefing</span>
-                  <a href="mailto:godwinbanda19@gmail.com" className="text-xl font-black hover:text-primary transition-colors text-white">godwinbanda19@gmail.com</a>
+                  <a href="mailto:contact@lightstackgroup.com" className="text-xl font-black hover:text-primary transition-colors text-white">contact@lightstackgroup.com</a>
                 </div>
              </div>
           </div>
