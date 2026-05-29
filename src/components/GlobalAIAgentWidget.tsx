@@ -7,13 +7,7 @@ import {
 import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
-import { LIGHTSTACK_KNOWLEDGE_BASE } from "../data/knowledgeBase";
-
-const OPEN_ROUTER_API_KEY = "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";
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "google/gemma-4-26b-a4b-it:free";
-
-const LIGHTSTACK_CONTEXT = LIGHTSTACK_KNOWLEDGE_BASE;
+import { OPEN_ROUTER_API_KEY, API_URL, MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
 
 const MINI_SUGGESTIONS = [
   { label: "What is the ADLC framework?", query: "Can you explain Lightstack's ADLC framework for Agentic AI?" },

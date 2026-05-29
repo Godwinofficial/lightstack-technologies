@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { LIGHTSTACK_KNOWLEDGE_BASE } from "../data/knowledgeBase";
-
-const OPEN_ROUTER_API_KEY = "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";
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "google/gemma-4-26b-a4b-it:free";
-
-const LIGHTSTACK_CONTEXT = LIGHTSTACK_KNOWLEDGE_BASE;
+import { OPEN_ROUTER_API_KEY, API_URL, MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
 
 const VOICES_PREFERRED = ["Google UK English Male", "Google US English", "Microsoft David", "Alex"];
 
@@ -37,7 +31,7 @@ export const getOfflineSimulationResponse = (query: string): string => {
   if (q.includes("who") || q.includes("what") || q.includes("lightstack") || q.includes("about") || q.includes("collective")) {
     return "Lightstack Technologies is an elite custom software engineering collective founded in 2024. We combine the disciplined reliability of traditional enterprise software with the adaptive intelligence of governed agentic AI. Every outcome is measurable.";
   }
-  return "I am Aletheia, Lightstack's AI consultant. The active OpenRouter API key has reached its credit limit, so I have initiated offline simulation mode. Ask me about our ADLC framework, enterprise architecture, custom web portals, native mobile apps, or support contacts!";
+  return "I am Aletheia, Lightstack's AI consultant. Connection error, I have initiated offline simulation mode. Ask me about our ADLC framework, enterprise architecture, custom web portals, native mobile app, or support contacts!";
 };
 
 export function AIAgentChat() {
@@ -638,7 +632,7 @@ export function AIAgentChat() {
               style={{
                 width: "100%", background: "transparent", border: "none",
                 outline: "none", resize: "none", padding: "11px 14px",
-                fontSize: "16px", color: "#e2e8f0", lineHeight: 1.5,
+                fontSize: 16, color: "#e2e8f0", lineHeight: 1.5,
                 fontFamily: "inherit", boxSizing: "border-box",
                 caretColor: "#6366f1",
                 opacity: isListening ? 0.7 : 1,
