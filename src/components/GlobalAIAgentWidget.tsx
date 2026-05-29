@@ -2,17 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, MessageSquare, X, Send, Mic, Trash2, Key, HelpCircle, 
-  ArrowRight, KeyRound, Volume2, MicOff, AlertCircle
+  KeyRound, Volume2, MicOff, AlertCircle
 } from "lucide-react";
-import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
 import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
-
-const MINI_SUGGESTIONS = [
-  { label: "What is the ADLC framework?", query: "Can you explain Lightstack's ADLC framework for Agentic AI?" },
-  { label: "Book a consultation", query: "I would like to contact Lightstack to discuss a custom enterprise architecture project." }
-];
 
 interface Message {
   role: "system" | "user" | "assistant";
@@ -39,7 +33,6 @@ export function GlobalAIAgentWidget() {
   const [voiceState, setVoiceState] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
-  const [voiceVolume, setVoiceVolume] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -50,7 +43,6 @@ export function GlobalAIAgentWidget() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const voiceVolumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load voices for synthesis
   useEffect(() => {
@@ -87,8 +79,6 @@ export function GlobalAIAgentWidget() {
     if (!synthRef.current) return;
     
     synthRef.current.cancel();
-    if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-    setVoiceVolume(0);
 
     let cleanText = text
       .replace(/\*\*/g, "")
@@ -134,21 +124,14 @@ export function GlobalAIAgentWidget() {
       utterance.onstart = () => {
         setVoiceState("speaking");
         setVoiceTranscript(sentenceText);
-        voiceVolumeIntervalRef.current = setInterval(() => {
-          setVoiceVolume(0.3 + Math.random() * 0.5);
-        }, 100);
       };
 
       utterance.onend = () => {
-        if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-        setVoiceVolume(0);
         sentenceIndex++;
         speakNextSentence();
       };
 
       utterance.onerror = () => {
-        if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-        setVoiceVolume(0);
         sentenceIndex++;
         speakNextSentence();
       };
@@ -161,8 +144,6 @@ export function GlobalAIAgentWidget() {
 
   const stopSpeechSynthesis = () => {
     if (synthRef.current) synthRef.current.cancel();
-    if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-    setVoiceVolume(0);
   };
 
   // Connect to OpenRouter API (Universal client)
@@ -408,29 +389,6 @@ export function GlobalAIAgentWidget() {
   return (
     <>
       {/* Immersive Voice Mode Overlay */}
-      <AnimatePresence>
-        {isVoiceMode && (
-          <motion.div
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-50 overflow-hidden"
-          >
-            <AIVoiceVisualizer
-              state={voiceState}
-              transcript={voiceState === "speaking" ? voiceTranscript : (voiceTranscript || interimTranscript)}
-              interimTranscript={voiceState === "listening" ? interimTranscript : ""}
-              onStop={handleExitVoiceMode}
-              isMuted={isMuted}
-              onToggleMute={handleToggleMute}
-              voiceVolume={voiceVolume}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Floating Trigger button */}
       <div className="fixed bottom-8 right-8 z-40 select-none">
         <AnimatePresence>
           {!isOpen && (
@@ -453,7 +411,7 @@ export function GlobalAIAgentWidget() {
 
         {/* Floating Mini glassmorphic window */}
         <AnimatePresence>
-          {isOpen && !isVoiceMode && (
+          {isOpen && (
             <motion.div
               layoutId="widget-window"
               className="fixed sm:absolute bottom-4 sm:bottom-0 right-4 sm:right-0 left-4 sm:left-auto w-auto sm:w-[380px] h-[75vh] sm:h-[550px] bg-white/90 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden z-50"
@@ -512,7 +470,7 @@ export function GlobalAIAgentWidget() {
                           A
                         </div>
                       )}
-                      <div className="flex flex-col gap-0.5 max-w-[85%]">
+                      <div className="flex flex-col gap-2 max-w-[85%]">
                         <div
                           className={`p-3.5 text-xs leading-relaxed ${
                             isAssistant
@@ -522,6 +480,17 @@ export function GlobalAIAgentWidget() {
                         >
                           <p className="whitespace-pre-line">{m.content}</p>
                         </div>
+                        {isAssistant && (
+                          <button
+                            type="button"
+                            onClick={() => speakText(m.content)}
+                            className="self-end inline-flex items-center justify-center rounded-md border border-border bg-muted/80 p-2 text-muted-foreground hover:bg-muted transition"
+                            title="Read response aloud"
+                            aria-label="Read response aloud"
+                          >
+                            <Volume2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -540,25 +509,6 @@ export function GlobalAIAgentWidget() {
                 )}
               </div>
 
-              {/* Compact Suggestions tags */}
-              <div className="px-4 py-2 bg-white flex flex-col gap-1 border-t border-border flex-shrink-0">
-                <div className="text-[8px] font-black uppercase text-muted-foreground/50 tracking-wider flex items-center gap-1">
-                  <HelpCircle className="w-3 h-3" /> Quick consultations
-                </div>
-                <div className="flex flex-col gap-1.5 mt-1">
-                  {MINI_SUGGESTIONS.map((s, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => submitQuery(s.query)}
-                      className="text-left py-1.5 px-3 border border-border hover:border-primary bg-muted/10 hover:bg-primary/[0.01] text-[10px] font-bold text-foreground flex items-center justify-between uppercase tracking-wider group transition-all"
-                    >
-                      <span className="truncate">{s.label}</span>
-                      <ArrowRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary transition-colors flex-shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Input Area */}
               <form
                 onSubmit={(e) => {
@@ -569,11 +519,20 @@ export function GlobalAIAgentWidget() {
               >
                 <button
                   type="button"
-                  onClick={handleEnterVoiceMode}
-                  className="p-3 border border-border hover:bg-muted text-primary transition-all flex-shrink-0 active:scale-95"
-                  title="Speak live"
+                  onClick={() => {
+                    if (isVoiceMode) {
+                      handleExitVoiceMode();
+                    } else {
+                      handleEnterVoiceMode();
+                    }
+                  }}
+                  className={`relative p-3 border border-border transition-all flex-shrink-0 active:scale-95 ${isVoiceMode ? "bg-primary text-white hover:bg-primary/90" : "hover:bg-muted text-primary"}`}
+                  title={isVoiceMode ? "Stop voice input" : "Speak live"}
                 >
                   <Mic className="w-4 h-4" />
+                  {isVoiceMode && voiceState === "listening" && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white"></span>
+                  )}
                 </button>
 
                 <input

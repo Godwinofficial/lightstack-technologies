@@ -396,160 +396,6 @@ export function AIAgentChat() {
         </div>
       </header>
 
-      {/* Voice Mode Overlay */}
-      {isVoiceMode && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 50,
-          background: "rgba(9,10,21,0.96)",
-          backdropFilter: "blur(20px)",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 32,
-        }}>
-          {/* Animated orb */}
-          <div style={{ position: "relative", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {/* Outer rings */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} style={{
-                position: "absolute",
-                width: 180 + i * 40,
-                height: 180 + i * 40,
-                borderRadius: "50%",
-                border: `1px solid rgba(99,102,241,${0.15 - i * 0.04})`,
-                animation: `ringPulse ${1.2 + i * 0.3}s ease-in-out infinite`,
-                animationDelay: `${i * 0.15}s`,
-              }} />
-            ))}
-            {/* Core orb */}
-            <div style={{
-              width: 120, height: 120, borderRadius: "50%",
-              background: isListening
-                ? "radial-gradient(circle, #10b981 0%, #059669 60%, #064e3b 100%)"
-                : isSpeaking
-                ? "radial-gradient(circle, #6366f1 0%, #4f46e5 60%, #1e1b4b 100%)"
-                : "radial-gradient(circle, #334155 0%, #1e293b 100%)",
-              boxShadow: isListening
-                ? "0 0 40px rgba(16,185,129,0.5), 0 0 80px rgba(16,185,129,0.2)"
-                : isSpeaking
-                ? "0 0 40px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2)"
-                : "0 0 20px rgba(0,0,0,0.5)",
-              transition: "all 0.4s ease",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 36,
-              animation: (isListening || isSpeaking) ? "orbPulse 1.5s ease-in-out infinite" : "none",
-            }}>
-              {isListening ? "🎤" : isSpeaking ? "🔊" : isLoading ? "⚡" : "💬"}
-            </div>
-          </div>
-
-          {/* Waveform */}
-          <div style={{ display: "flex", alignItems: "center", gap: 3, height: 48 }}>
-            {waveValues.map((h, i) => (
-              <div key={i} style={{
-                width: 3, borderRadius: 2,
-                height: `${h}px`,
-                background: isListening
-                  ? `rgba(16,185,129,${0.5 + (h / 36) * 0.5})`
-                  : isSpeaking
-                  ? `rgba(99,102,241,${0.5 + (h / 36) * 0.5})`
-                  : "rgba(148,163,184,0.2)",
-                transition: "height 0.08s ease",
-              }} />
-            ))}
-          </div>
-
-          {/* Status label */}
-          <div style={{ textAlign: "center" }}>
-            <div style={{
-              fontSize: 20, fontWeight: 600, color: "#f0f1f8", marginBottom: 8,
-              letterSpacing: "-0.3px",
-            }}>
-              {isListening ? "Listening…" : isSpeaking ? "Speaking…" : isLoading ? "Processing…" : "Tap mic to speak"}
-            </div>
-            {transcript && (
-              <div style={{
-                fontSize: 14, color: "#94a3b8", maxWidth: 400, textAlign: "center",
-                background: "rgba(255,255,255,0.04)", padding: "10px 20px", borderRadius: 12,
-              }}>
-                {transcript}
-              </div>
-            )}
-          </div>
-
-          {/* Controls */}
-          <div style={{ display: "flex", gap: 16 }}>
-            <button
-              onClick={() => isListening ? stopListening() : startListening()}
-              disabled={isLoading || isSpeaking}
-              style={{
-                width: 60, height: 60, borderRadius: "50%", border: "none",
-                cursor: isLoading || isSpeaking ? "not-allowed" : "pointer",
-                background: isListening
-                  ? "linear-gradient(135deg, #ef4444, #b91c1c)"
-                  : "linear-gradient(135deg, #10b981, #059669)",
-                boxShadow: isListening ? "0 0 24px rgba(239,68,68,0.4)" : "0 0 24px rgba(16,185,129,0.4)",
-                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
-                opacity: isLoading || isSpeaking ? 0.4 : 1,
-                transition: "all 0.2s",
-              }}
-            >
-              {isListening ? "⏹" : "🎤"}
-            </button>
-
-            <button
-              onClick={() => { synthRef.current?.cancel(); setIsSpeaking(false); }}
-              disabled={!isSpeaking}
-              style={{
-                width: 60, height: 60, borderRadius: "50%", border: "none",
-                cursor: isSpeaking ? "pointer" : "not-allowed",
-                background: "rgba(255,255,255,0.06)",
-                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
-                opacity: isSpeaking ? 1 : 0.3,
-                transition: "all 0.2s",
-              }}
-            >
-              🔇
-            </button>
-
-            <button
-              onClick={toggleVoiceMode}
-              style={{
-                width: 60, height: 60, borderRadius: "50%",
-                cursor: "pointer",
-                background: "rgba(239,68,68,0.15)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              ✕
-            </button>
-          </div>
-
-          {voiceError && (
-            <div style={{ color: "#f87171", fontSize: 13, background: "rgba(239,68,68,0.1)", padding: "8px 16px", borderRadius: 8 }}>
-              {voiceError}
-            </div>
-          )}
-
-          {/* Last message preview */}
-          {messages.length > 1 && (
-            <div style={{
-              position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)",
-              maxWidth: 500, width: "90%",
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 16, padding: "14px 18px",
-            }}>
-              <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600, marginBottom: 6, letterSpacing: "0.5px" }}>LAST RESPONSE</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>
-                {messages[messages.length - 1].role === "assistant"
-                  ? messages[messages.length - 1].content.slice(0, 120) + (messages[messages.length - 1].content.length > 120 ? "…" : "")
-                  : "—"}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Chat messages */}
       <div style={{
         flex: 1, overflowY: "auto", padding: "20px 16px",
         position: "relative", zIndex: 5,
@@ -586,19 +432,32 @@ export function AIAgentChat() {
                 boxShadow: msg.role === "user"
                   ? "0 4px 16px rgba(99,102,241,0.25)"
                   : "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
               }}>
-                {msg.content}
+                <div>{msg.content}</div>
                 {msg.role === "assistant" && (
                   <button
                     onClick={() => speak(msg.content)}
                     style={{
-                      marginLeft: 8, background: "none", border: "none",
-                      color: "#4b5563", cursor: "pointer", fontSize: 13,
-                      padding: 2, borderRadius: 4,
-                      verticalAlign: "middle",
-                      opacity: 0.6,
+                      alignSelf: "flex-end",
+                      width: 32,
+                      height: 32,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 8,
+                      color: "#d1d5db",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      padding: 0,
+                      opacity: 0.8,
                     }}
-                    title="Read aloud"
+                    title="Read response aloud"
+                    aria-label="Read response aloud"
                   >🔊</button>
                 )}
               </div>
@@ -649,25 +508,33 @@ export function AIAgentChat() {
           maxWidth: 720, margin: "0 auto",
           display: "flex", gap: 10, alignItems: "flex-end",
         }}>
-          {/* Voice mic button */}
-          <button
-            onClick={() => isListening ? stopListening() : startListening()}
-            disabled={isLoading || isSpeaking}
-            style={{
-              width: 44, height: 44, borderRadius: 12,
-              cursor: isLoading ? "not-allowed" : "pointer", flexShrink: 0,
-              background: isListening
-                ? "linear-gradient(135deg, #ef4444, #b91c1c)"
-                : "rgba(255,255,255,0.06)",
-              border: isListening ? "none" : "1px solid rgba(255,255,255,0.1)",
-              fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: isListening ? "0 0 16px rgba(239,68,68,0.4)" : "none",
-              transition: "all 0.2s",
-              opacity: isLoading ? 0.5 : 1,
-            }}
-          >
-            {isListening ? "⏹" : "🎤"}
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            {/* Voice mic button */}
+            <button
+              onClick={() => isListening ? stopListening() : startListening()}
+              disabled={isLoading || isSpeaking}
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                cursor: isLoading ? "not-allowed" : "pointer", flexShrink: 0,
+                background: isListening
+                  ? "linear-gradient(135deg, #ef4444, #b91c1c)"
+                  : "rgba(255,255,255,0.06)",
+                border: isListening ? "none" : "1px solid rgba(255,255,255,0.1)",
+                fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: isListening ? "0 0 16px rgba(239,68,68,0.4)" : "none",
+                transition: "all 0.2s",
+                opacity: isLoading ? 0.5 : 1,
+              }}
+            >
+              {isListening ? "⏹" : "🎤"}
+            </button>
+            {isListening && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#f87171" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f87171", boxShadow: "0 0 10px rgba(248,113,113,0.5)" }} />
+                Listening...
+              </div>
+            )}
+          </div>
 
           {/* Text input */}
           <div style={{
