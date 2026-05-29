@@ -65,7 +65,7 @@ export default async function handler(req, res) {
         "X-Title": "Lightstack AI Assistant",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-v4-flash:free",
+        model: "google/gemini-2.5-flash:free",
         messages: messages,
         stream: true
       })

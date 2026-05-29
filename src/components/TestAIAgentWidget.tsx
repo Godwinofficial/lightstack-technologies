@@ -83,7 +83,7 @@ export function TestAIAgentWidget() {
         throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
       }
 
-      addLog("success", "Connected to OpenRouter stream (deepseek-v4-flash)!");
+      addLog("success", "Connected to OpenRouter stream (Gemini 2.5 Flash)!");
 
       const reader = response.body?.getReader();
       if (!reader) {
@@ -228,7 +228,7 @@ export function TestAIAgentWidget() {
                     <span className="text-violet-400">Endpoint:</span> <span className="text-slate-200">/api/test-agent (POST/GET)</span>
                   </div>
                   <div>
-                    <span className="text-violet-400">Agent Model:</span> <span className="text-emerald-400 font-bold">deepseek-v4-flash (with Reasoning)</span>
+                    <span className="text-violet-400">Agent Model:</span> <span className="text-emerald-400 font-bold">Gemini 2.5 Flash (Free)</span>
                   </div>
                 </div>
                 <button
@@ -282,7 +282,7 @@ export function TestAIAgentWidget() {
 
                     {isTesting && !streamText && (
                       <div className="text-slate-500 pl-4 italic border-l border-violet-500/20 animate-pulse">
-                        Waiting for Deepseek stream payload...
+                        Waiting for Gemini stream payload...
                       </div>
                     )}
 
@@ -309,7 +309,7 @@ export function TestAIAgentWidget() {
                           <Brain className="w-4 h-4 text-violet-400 animate-pulse" />
                         </div>
                         <div className="font-mono">
-                          <div className="text-[9px] text-violet-400 uppercase tracking-widest font-bold">DeepSeek Reasoning</div>
+                          <div className="text-[9px] text-violet-400 uppercase tracking-widest font-bold">Gemini Reasoning</div>
                           <div className="text-xs font-bold text-slate-100 uppercase">Reasoning Token Usage</div>
                         </div>
                       </div>
