@@ -22,7 +22,6 @@ interface Message {
 
 export function GlobalAIAgentWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [pathname, setPathname] = useState("");
   
   // Chat States
   const [messages, setMessages] = useState<Message[]>([
@@ -53,22 +52,6 @@ export function GlobalAIAgentWidget() {
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const voiceVolumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Listen to router/location changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setPathname(window.location.pathname);
-      
-      // Periodically monitor location changes (useful inside SPA routers)
-      const interval = setInterval(() => {
-        if (window.location.pathname !== pathname) {
-          setPathname(window.location.pathname);
-        }
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [pathname]);
-
   // Load voices for synthesis
   useEffect(() => {
     if (typeof window !== "undefined" && isOpen) {
@@ -98,9 +81,6 @@ export function GlobalAIAgentWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isSending, isOpen]);
-
-  // If on the /agent route, hide the widget entirely to avoid UI collision
-  if (pathname === "/agent") return null;
 
   // Speak synthesized response out loud
   const speakText = (text: string) => {
