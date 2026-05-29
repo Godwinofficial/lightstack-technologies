@@ -622,7 +622,7 @@ export function GlobalAIAgentWidget() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Ask Aletheia about systems..."
-                  className="flex-1 px-3 py-3 border border-border text-xs focus:outline-none focus:border-primary bg-muted/5 font-medium"
+                  className="flex-1 px-3 py-3 border border-border text-base md:text-xs focus:outline-none focus:border-primary bg-muted/5 font-medium"
                   disabled={isSending}
                 />
 

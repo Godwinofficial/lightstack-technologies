@@ -654,7 +654,7 @@ export function AIAgentChat() {
               style={{
                 width: "100%", background: "transparent", border: "none",
                 outline: "none", resize: "none", padding: "11px 14px",
-                fontSize: 14, color: "#e2e8f0", lineHeight: 1.5,
+                fontSize: "16px", color: "#e2e8f0", lineHeight: 1.5,
                 fontFamily: "inherit", boxSizing: "border-box",
                 caretColor: "#6366f1",
                 opacity: isListening ? 0.7 : 1,
