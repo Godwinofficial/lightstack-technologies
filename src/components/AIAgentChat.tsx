@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
-const MODEL = "anthropic/claude-3.5-sonnet";
-const API_URL = "/api/chat";
+const OPEN_ROUTER_API_KEY = "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";
+const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MODEL = "google/gemma-4-26b-a4b-it:free";
 
 const LIGHTSTACK_CONTEXT = `You are the official AI assistant for Lightstack Group (lightstackgroup.com). You are knowledgeable, professional, and helpful.
 
@@ -187,10 +188,47 @@ export function AIAgentChat() {
       setPulseActive(true);
 
       try {
-        // Simulate a small delay for realism
-        await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 600));
+        const history = [...messages, userMsg].slice(-12);
+        const sysPrompt = LIGHTSTACK_CONTEXT + (fromVoice || isVoiceMode
+          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
+          : "");
 
-        const reply = getOfflineSimulationResponse(text);
+        const openRouterMessages = [];
+        if (sysPrompt) {
+          openRouterMessages.push({ role: "system", content: sysPrompt });
+        }
+        history.forEach(msg => {
+          openRouterMessages.push({ role: msg.role, content: msg.content });
+        });
+
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
+            "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
+            "X-Title": "Lumina AI"
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: openRouterMessages,
+            max_tokens: fromVoice || isVoiceMode ? 150 : 600,
+            temperature: 0.7,
+          }),
+        });
+
+        let reply = "";
+        if (!res.ok) {
+          let errorDetail = `HTTP ${res.status}`;
+          try {
+            const errJson = await res.json();
+            errorDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+          } catch (e) {}
+          throw new Error(errorDetail);
+        } else {
+          const data = await res.json();
+          reply = data.choices?.[0]?.message?.content || "No response received.";
+        }
 
         const assistantMsg: Message = { role: "assistant", content: reply };
         setMessages((prev) => [...prev, assistantMsg]);
@@ -199,7 +237,10 @@ export function AIAgentChat() {
           setTimeout(() => speak(reply), 100);
         }
       } catch (err: any) {
-        const errMsg: Message = { role: "assistant", content: `⚠️ Error: ${err.message}` };
+        const errMsg: Message = { 
+          role: "assistant", 
+          content: `⚠️ Request failed: ${err.message || "Network or API issue"}. Make sure your OpenRouter key is valid and model '${MODEL}' is accessible.` 
+        };
         setMessages((prev) => [...prev, errMsg]);
         if (fromVoice || isVoiceMode) setIsListening(false);
       } finally {
