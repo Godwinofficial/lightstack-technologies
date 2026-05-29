@@ -201,30 +201,47 @@ export function AIAgentChat() {
           openRouterMessages.push({ role: msg.role, content: msg.content });
         });
 
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-            "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
-            "X-Title": "Lumina AI"
-          },
-          body: JSON.stringify({
-            model: MODEL,
-            messages: openRouterMessages,
-            max_tokens: fromVoice || isVoiceMode ? 150 : 600,
-            temperature: 0.7,
-          }),
-        });
+        let res: Response | null = null;
+        let retries = 3;
+        let delay = 1000;
+
+        for (let i = 0; i <= retries; i++) {
+          try {
+            res = await fetch(API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
+                "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
+                "X-Title": "Lumina AI"
+              },
+              body: JSON.stringify({
+                model: MODEL,
+                messages: openRouterMessages,
+                max_tokens: fromVoice || isVoiceMode ? 150 : 600,
+                temperature: 0.7,
+              }),
+            });
+
+            if (res.status === 429 && i < retries) {
+              console.warn(`[API] Rate limited (429). Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              delay *= 2; // exponential backoff
+              continue;
+            }
+            break;
+          } catch (fetchErr) {
+            if (i === retries) throw fetchErr;
+            console.warn(`[API] Network error. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+          }
+        }
 
         let reply = "";
-        if (!res.ok) {
-          let errorDetail = `HTTP ${res.status}`;
-          try {
-            const errJson = await res.json();
-            errorDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson);
-          } catch (e) {}
-          throw new Error(errorDetail);
+        if (!res || !res.ok) {
+          console.warn(`[API] OpenRouter rate-limited or failed (Status: ${res?.status || "unknown"}). Activating offline fallback.`);
+          reply = getOfflineSimulationResponse(text);
         } else {
           const data = await res.json();
           reply = data.choices?.[0]?.message?.content || "No response received.";
@@ -237,12 +254,13 @@ export function AIAgentChat() {
           setTimeout(() => speak(reply), 100);
         }
       } catch (err: any) {
-        const errMsg: Message = { 
-          role: "assistant", 
-          content: `⚠️ Request failed: ${err.message || "Network or API issue"}. Make sure your OpenRouter key is valid and model '${MODEL}' is accessible.` 
-        };
-        setMessages((prev) => [...prev, errMsg]);
-        if (fromVoice || isVoiceMode) setIsListening(false);
+        console.error("Widget API Error:", err);
+        const fallbackReply = getOfflineSimulationResponse(text);
+        const fallbackMsg: Message = { role: "assistant", content: fallbackReply };
+        setMessages((prev) => [...prev, fallbackMsg]);
+        if (fromVoice || isVoiceMode) {
+          setTimeout(() => speak(fallbackReply), 100);
+        }
       } finally {
         setIsLoading(false);
         setPulseActive(false);
