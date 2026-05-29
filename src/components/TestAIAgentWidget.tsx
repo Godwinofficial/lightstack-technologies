@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal, Brain, Play, RefreshCw, X, Send, Command, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
+import { getOfflineSimulationResponse } from "./AIAgentChat";
 
 interface LogEntry {
   timestamp: string;
@@ -66,63 +67,37 @@ export function TestAIAgentWidget() {
     setInputText("");
 
     addLog("info", `POST /api/test-agent | Prompt length: ${queryText.length} chars`);
-    addLog("info", "Sending payload & opening connection...");
+    addLog("info", "Opening local simulated stream connection...");
 
     try {
-      const response = await fetch("/api/test-agent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: updatedHistory,
-        }),
-      });
+      // Simulate slight network delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (!response.ok) {
-        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+      addLog("success", "Connected to local simulated Gemini 2.5 Flash stream!");
+
+      const fullResponse = getOfflineSimulationResponse(queryText);
+      const mockReasoningTokens = Math.floor(Math.random() * 800) + 400;
+
+      // Stream the response in word chunks
+      const words = fullResponse.split(" ");
+      let currentText = "";
+
+      for (let i = 0; i < words.length; i++) {
+        currentText += (i === 0 ? "" : " ") + words[i];
+        setStreamText(currentText);
+        // Simulate streaming delay
+        await new Promise((resolve) => setTimeout(resolve, 40 + Math.random() * 40));
       }
 
-      addLog("success", "Connected to OpenRouter stream (Gemini 2.5 Flash)!");
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Response body is not readable (Reader not supported).");
-      }
-
-      const decoder = new TextDecoder("utf-8");
-      let done = false;
-      let fullResponseText = "";
-
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-
-        if (value) {
-          const chunk = decoder.decode(value, { stream: !done });
-          
-          // Parse reasoning token usage line if appended at the end
-          const tokenMatch = chunk.match(/Reasoning tokens:\s*(\d+)/i);
-          if (tokenMatch) {
-            const tokens = parseInt(tokenMatch[1], 10);
-            setReasoningTokens(tokens);
-            addLog("success", `Parsed reasoning metrics: ${tokens} tokens`);
-            
-            // Clean reasoning tag out of standard streaming output for UI presentation
-            const cleanChunk = chunk.replace(/Reasoning tokens:\s*\d+/gi, "");
-            fullResponseText += cleanChunk;
-            setStreamText(fullResponseText);
-          } else {
-            fullResponseText += chunk;
-            setStreamText(fullResponseText);
-          }
-        }
-      }
+      // Simulate sending reasoning tokens at the end
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      setReasoningTokens(mockReasoningTokens);
+      addLog("success", `Parsed reasoning metrics: ${mockReasoningTokens} tokens`);
 
       addLog("success", "Stream ended successfully.");
       
       // Save assistant's reply into conversation history
-      setChatHistory((prev) => [...prev, { role: "assistant", content: fullResponseText }]);
+      setChatHistory((prev) => [...prev, { role: "assistant", content: fullResponse }]);
       setStreamText(""); // Clear stream text since it's saved in history
     } catch (err: any) {
       console.error(err);

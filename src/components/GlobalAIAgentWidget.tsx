@@ -225,45 +225,10 @@ export function GlobalAIAgentWidget() {
     }
 
     try {
-      const history = messages.map(m => ({
-        role: m.role === "system" ? "assistant" : m.role,
-        content: m.content
-      })).slice(-12);
-      history.push({ role: "user", content: queryText });
+      // Simulate slight network delay
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 600));
 
-      const sysPrompt = LIGHTSTACK_CONTEXT + (isVoiceMode
-        ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
-        : "");
-
-      const openRouterMessages = [];
-      if (sysPrompt) {
-        openRouterMessages.push({ role: "system", content: sysPrompt });
-      }
-      history.forEach(msg => {
-        openRouterMessages.push({ role: msg.role, content: msg.content });
-      });
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: isVoiceMode ? 150 : 600,
-          messages: openRouterMessages,
-        }),
-      });
-
-      let replyContent = "";
-      if (res.status === 404) {
-        console.warn("API returned 404. Falling back to offline simulation in local development.");
-        replyContent = getOfflineSimulationResponse(queryText);
-      } else if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${res.status}`);
-      } else {
-        const data = await res.json();
-        replyContent = data.choices?.[0]?.message?.content || "No response received.";
-      }
+      const replyContent = getOfflineSimulationResponse(queryText);
 
       const assistantMessage: Message = {
         role: "assistant",
@@ -278,18 +243,7 @@ export function GlobalAIAgentWidget() {
       }
     } catch (err: any) {
       console.error("Widget API Error:", err);
-      
-      const errorMessage: Message = {
-        role: "assistant",
-        content: `⚠️ API Connection Error: ${err.message || "Failed to reach OpenRouter API. Please check your network connection or API key."}`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      toast.error(`API Error: ${err.message || "Connection failed"}`);
-      
-      if (isVoiceMode) {
-        speakText("I encountered an error connecting to the online system. Please check your API key or network connection.");
-      }
+      toast.error(`Error: ${err.message || "Something went wrong"}`);
     } finally {
       setIsSending(false);
     }

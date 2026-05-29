@@ -187,40 +187,10 @@ export function AIAgentChat() {
       setPulseActive(true);
 
       try {
-        const history = [...messages, userMsg].slice(-12);
-        const sysPrompt = LIGHTSTACK_CONTEXT + (fromVoice || isVoiceMode
-          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
-          : "");
+        // Simulate a small delay for realism
+        await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 600));
 
-        const openRouterMessages = [];
-        if (sysPrompt) {
-          openRouterMessages.push({ role: "system", content: sysPrompt });
-        }
-        history.forEach(msg => {
-          openRouterMessages.push({ role: msg.role, content: msg.content });
-        });
-
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: MODEL,
-            max_tokens: fromVoice || isVoiceMode ? 150 : 600,
-            messages: openRouterMessages,
-          }),
-        });
-
-        let reply = "";
-        if (res.status === 404) {
-          console.warn("API returned 404. Falling back to offline simulation in local development.");
-          reply = getOfflineSimulationResponse(text);
-        } else if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error?.message || `API error ${res.status}`);
-        } else {
-          const data = await res.json();
-          reply = data.choices?.[0]?.message?.content || "No response received.";
-        }
+        const reply = getOfflineSimulationResponse(text);
 
         const assistantMsg: Message = { role: "assistant", content: reply };
         setMessages((prev) => [...prev, assistantMsg]);
