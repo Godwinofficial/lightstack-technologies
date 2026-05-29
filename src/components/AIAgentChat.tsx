@@ -1,20 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Send, Mic, Volume2, VolumeX, Sparkles, Trash2, ArrowRight, 
-  HelpCircle, Cpu, Globe, Layers, Smartphone, ChevronRight, X, Play, RefreshCw, Key
-} from "lucide-react";
-import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
-import { toast } from "sonner";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const MODEL = "claude-sonnet-4-20250514";
 const API_URL = "https://api.anthropic.com/v1/messages";
-
-interface Message {
-  role: "system" | "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
 
 const LIGHTSTACK_CONTEXT = `You are the official AI assistant for Lightstack Group (lightstackgroup.com). You are knowledgeable, professional, and helpful.
 
@@ -35,12 +22,12 @@ Your role:
 - For voice interactions, avoid using markdown, bullet points, or special characters
 - Always be helpful, professional, and reflect Lightstack's "Engineering Beyond Code" spirit`;
 
-const SUGGESTIONS = [
-  { label: "What is the ADLC framework?", query: "Can you explain Lightstack's ADLC framework for Agentic AI?" },
-  { label: "Tell me about your mobile apps", query: "What technical architecture does Lightstack use for native mobile apps?" },
-  { label: "How fast are your systems?", query: "What operational latency and accuracy metrics do Lightstack systems guarantee?" },
-  { label: "Book a technical architecture consultation", query: "I would like to contact Lightstack to discuss a custom enterprise architecture project." }
-];
+const VOICES_PREFERRED = ["Google UK English Male", "Google US English", "Microsoft David", "Alex"];
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export const getOfflineSimulationResponse = (query: string): string => {
   const q = query.toLowerCase();
@@ -69,670 +56,620 @@ export const getOfflineSimulationResponse = (query: string): string => {
 };
 
 export function AIAgentChat() {
-  // Chat history & inputs
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Welcome to Lightstack Technologies. I am Aletheia, your AI consultant. I can answer questions about our Agentic AI systems, enterprise software engineering capabilities, or walk you through our ADLC framework. Would you like to type, or enter Live Voice Mode to interact verbally?",
-      timestamp: new Date()
-    }
+      content: "Hi! I'm the Lightstack AI assistant. I can help you learn about our engineering services, discuss your project ideas, or answer any questions. How can I help you today?",
+    },
   ]);
-  const [inputText, setInputText] = useState("");
-  const [isSending, setIsSending] = useState(false);
-
-  // Settings & configs
-  
-  // Voice Synthesis (TTS) settings
-  const [speechRate, setSpeechRate] = useState(1.05);
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>("");
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [isMuted, setIsMuted] = useState(false);
-
-  // Live Voice Mode States
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [voiceState, setVoiceState] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
-  const [voiceTranscript, setVoiceTranscript] = useState(""); // Speech-to-Text dynamic buffer
-  const [interimTranscript, setInterimTranscript] = useState(""); // Speech-to-Text active buffer
-  const [voiceVolume, setVoiceVolume] = useState(0); // Fake volume animation during TTS
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [voiceError, setVoiceError] = useState("");
+  const [waveValues, setWaveValues] = useState<number[]>(Array(20).fill(4));
+  const [pulseActive, setPulseActive] = useState(false);
 
-  // Refs for Web Speech & scroll sync
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
-  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const voiceVolumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Populate browser voices
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      synthRef.current = window.speechSynthesis;
-      const loadVoices = () => {
-        const availableVoices = window.speechSynthesis.getVoices();
-        setVoices(availableVoices);
-        
-        // Pick a natural English voice by default
-        const defaultVoice = availableVoices.find(
-          v => v.lang.includes("en-US") && (v.name.includes("Google") || v.name.includes("Natural"))
-        ) || availableVoices.find(v => v.lang.startsWith("en"));
-        
-        if (defaultVoice) {
-          setSelectedVoiceName(defaultVoice.name);
-        }
-      };
-
-      loadVoices();
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-      }
-    }
-  }, []);
-
-
+  const synthRef = useRef<SpeechSynthesis | null>(typeof window !== "undefined" ? window.speechSynthesis : null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const waveIntervalRef = useRef<any>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Scroll to bottom
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, voiceTranscript]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  // Clean TTS voice output synthesis helper
-  const speakText = (text: string) => {
+  // Animate waveform
+  useEffect(() => {
+    if (isListening || isSpeaking) {
+      waveIntervalRef.current = setInterval(() => {
+        setWaveValues(
+          Array(20)
+            .fill(0)
+            .map(() => Math.random() * 32 + 4)
+        );
+      }, 80);
+    } else {
+      clearInterval(waveIntervalRef.current);
+      setWaveValues(Array(20).fill(4));
+    }
+    return () => clearInterval(waveIntervalRef.current);
+  }, [isListening, isSpeaking]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      synthRef.current?.cancel();
+    };
+  }, []);
+
+  const speak = useCallback((text: string) => {
     if (!synthRef.current) return;
-    
-    // Stop any ongoing speech
     synthRef.current.cancel();
-    if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-    setVoiceVolume(0);
-
-    // Clean text: strip out markdown stars, links, brackets, and code blocks for spoken voice
-    let cleanText = text
-      .replace(/\*\*/g, "") // Bold
-      .replace(/\*/g, "")  // Italic
-      .replace(/```[\s\S]*?```/g, "[Code segment omitted]") // Code blocks
-      .replace(/`([^`]+)`/g, "$1") // Inline code
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links
-      .replace(/#+/g, "") // Headers
+    // Strip markdown
+    const clean = text
+      .replace(/[*_`#~]/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/\n+/g, ". ")
       .trim();
-
-    if (!cleanText) return;
-
-    // Split speech into manageable sentences (browsers perform better with short sentences)
-    const sentences = cleanText.match(/[^.!?]+[.!?]+(\s|$)/g) || [cleanText];
-    let sentenceIndex = 0;
-
-    const speakNextSentence = () => {
-      if (!synthRef.current || sentenceIndex >= sentences.length || !isVoiceMode) {
-        // Speech completed! Return back to listening state
-        if (isVoiceMode) {
-          setVoiceState("listening");
-          setVoiceTranscript("");
-          setInterimTranscript("");
-          startSpeechRecognition();
-        }
-        return;
-      }
-
-      const sentenceText = sentences[sentenceIndex].trim();
-      if (!sentenceText) {
-        sentenceIndex++;
-        speakNextSentence();
-        return;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(sentenceText);
-      activeUtteranceRef.current = utterance;
-      
-      // Select preferred voice
-      const activeVoice = voices.find(v => v.name === selectedVoiceName);
-      if (activeVoice) utterance.voice = activeVoice;
-      
-      utterance.rate = speechRate;
-      utterance.pitch = 1.0;
-
-      utterance.onstart = () => {
-        setVoiceState("speaking");
-        setVoiceTranscript(sentenceText); // Show active spoken text as subtitles
-
-        // Simulate real voice volume fluctuations for Canvas visualizer
-        voiceVolumeIntervalRef.current = setInterval(() => {
-          setVoiceVolume(0.3 + Math.random() * 0.5);
-        }, 100);
-      };
-
-      utterance.onend = () => {
-        if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-        setVoiceVolume(0);
-        sentenceIndex++;
-        speakNextSentence();
-      };
-
-      utterance.onerror = (e) => {
-        console.error("Speech Synthesis Error:", e);
-        if (voiceVolumeIntervalRef.current) clearInterval(voiceVolumeIntervalRef.current);
-        setVoiceVolume(0);
-        sentenceIndex++;
-        speakNextSentence();
-      };
-
-      synthRef.current.speak(utterance);
-    };
-
-    speakNextSentence();
-  };
-
-  // Stop current Speech Synthesis
-  const stopSpeechSynthesis = () => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
-    }
-    if (voiceVolumeIntervalRef.current) {
-      clearInterval(voiceVolumeIntervalRef.current);
-    }
-    setVoiceVolume(0);
-  };
-
-  // Connect to OpenRouter API (Universal client)
-  const submitQuery = async (queryText: string) => {
-    if (!queryText.trim()) return;
-
-    // Add user message to log
-    const userMessage: Message = {
-      role: "user",
-      content: queryText,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInputText("");
-    setIsSending(true);
-
-    if (isVoiceMode) {
-      setVoiceState("thinking");
-      stopSpeechSynthesis();
-    }
-
-    try {
-      const history = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })).slice(-12);
-
-      // Append new message
-      history.push({ role: "user", content: queryText });
-
-      const sysPrompt = LIGHTSTACK_CONTEXT + (isVoiceMode
-        ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
-        : "");
-
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: isVoiceMode ? 150 : 600,
-          system: sysPrompt,
-          messages: history,
-        })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `API error ${response.status}`);
-      }
-
-      const data = await response.json();
-      const replyContent = data.content?.find((b: any) => b.type === "text")?.text || "I didn't get a response. Please try again.";
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: replyContent,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // If in Voice Mode, speak the reply out loud!
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.rate = 1.05;
+    utter.pitch = 1.0;
+    utter.volume = 1;
+    // Pick best voice
+    const voices = synthRef.current.getVoices();
+    const preferred = voices.find((v) => VOICES_PREFERRED.some((p) => v.name.includes(p)));
+    if (preferred) utter.voice = preferred;
+    utter.onstart = () => setIsSpeaking(true);
+    utter.onend = () => {
+      setIsSpeaking(false);
       if (isVoiceMode) {
-        speakText(replyContent);
+        setTimeout(() => startListening(), 400);
       }
-    } catch (err: any) {
-      console.error("Lightstack API Error:", err);
-      
-      const offlineReply = getOfflineSimulationResponse(queryText);
-      
-      const simulationMessage: Message = {
-        role: "assistant",
-        content: `[Offline Simulation Mode - pre-configured AI connection issue.]\n\n${offlineReply}`,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, simulationMessage]);
-      toast.warning("API connection issue. Initiated offline simulation mode.");
-      
-      if (isVoiceMode) {
-        speakText(offlineReply);
-      }
-    } finally {
-      setIsSending(false);
-    }
-  };
+    };
+    utter.onerror = () => setIsSpeaking(false);
+    synthRef.current.speak(utter);
+  }, [isVoiceMode]);
 
-  // ----------------------------------------------------
-  // SPEECH RECOGNITION (STT) PROCESS
-  // ----------------------------------------------------
-  const startSpeechRecognition = () => {
-    if (typeof window === "undefined" || isMuted) return;
-
-    // Check compatibility
-    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionClass) {
-      toast.error("Web Speech Recognition not supported in this browser. Try Chrome, Edge, or Safari.");
+  const startListening = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceError("Speech recognition not supported in this browser.");
       return;
     }
-
-    // Stop existing instance
-    stopSpeechRecognitionOnly();
-
-    const recognition = new SpeechRecognitionClass();
-    recognitionRef.current = recognition;
-    
-    recognition.continuous = true;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-US";
-
     recognition.onstart = () => {
-      setVoiceState("listening");
-      setVoiceTranscript("");
-      setInterimTranscript("");
+      setIsListening(true);
+      setVoiceError("");
+      setTranscript("");
     };
-
-    recognition.onresult = (event: any) => {
-      let finalSpeech = "";
-      let interimSpeech = "";
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalSpeech += event.results[i][0].transcript;
-        } else {
-          interimSpeech += event.results[i][0].transcript;
-        }
-      }
-
-      if (finalSpeech) {
-        setVoiceTranscript(prev => (prev + " " + finalSpeech).trim());
-      }
-      setInterimTranscript(interimSpeech);
-
-      // Auto-Submit on silence detection!
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      
-      const activeQuery = (voiceTranscript + " " + finalSpeech + " " + interimSpeech).trim();
-      if (activeQuery.length > 3) {
-        silenceTimerRef.current = setTimeout(() => {
-          // Submit query automatically
-          submitVoiceQuery(activeQuery);
-        }, 1800); // 1.8 seconds of silence trigger
-      }
+    recognition.onresult = (e: any) => {
+      const t = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join("");
+      setTranscript(t);
     };
-
-    recognition.onerror = (event: any) => {
-      console.warn("Speech recognition error:", event.error);
-      if (event.error === "not-allowed") {
-        toast.error("Microphone access blocked. Please enable mic permissions.");
-        setIsMuted(true);
-        setVoiceState("idle");
-      }
-    };
-
     recognition.onend = () => {
-      // Auto-restart recognition if Voice Mode is active and we're not speaking or thinking
-      if (isVoiceMode && voiceState === "listening" && !isMuted) {
-        try {
-          recognition.start();
-        } catch (e) {
-          // ignore double starts
-        }
-      }
+      setIsListening(false);
+      setTranscript((t) => {
+        if (t.trim()) sendMessage(t.trim(), true);
+        return "";
+      });
     };
+    recognition.onerror = (e: any) => {
+      setIsListening(false);
+      if (e.error !== "no-speech") setVoiceError(`Mic error: ${e.error}`);
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, []);
 
-    try {
-      recognition.start();
-    } catch (err) {
-      console.error("Failed to start speech recognition:", err);
-    }
-  };
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
 
-  const stopSpeechRecognitionOnly = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-    }
-  };
+  const sendMessage = useCallback(
+    async (text: string, fromVoice = false) => {
+      if (!text.trim() || isLoading) return;
+      const userMsg: Message = { role: "user", content: text };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+      setIsLoading(true);
+      setPulseActive(true);
 
-  // Submit voice transcript to OpenRouter
-  const submitVoiceQuery = (query: string) => {
-    stopSpeechRecognitionOnly();
-    if (!query || query.trim().length < 2) {
-      setVoiceState("listening");
-      startSpeechRecognition();
-      return;
-    }
-    submitQuery(query);
-  };
+      try {
+        const history = [...messages, userMsg].slice(-12);
+        const sysPrompt = LIGHTSTACK_CONTEXT + (fromVoice || isVoiceMode
+          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
+          : "");
 
-  // Enter Live Voice Mode
-  const handleEnterVoiceMode = () => {
-    setIsVoiceMode(true);
-    setVoiceState("listening");
-    stopSpeechSynthesis();
-    
-    // Tiny delay to allow window state transition
-    setTimeout(() => {
-      if (!isMuted) {
-        startSpeechRecognition();
-      } else {
-        setVoiceState("listening");
-        setVoiceTranscript("");
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: MODEL,
+            max_tokens: fromVoice || isVoiceMode ? 150 : 600,
+            system: sysPrompt,
+            messages: history,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `API error ${res.status}`);
+        }
+
+        const data = await res.json();
+        const reply = data.content?.find((b: any) => b.type === "text")?.text || "I didn't get a response. Please try again.";
+        const assistantMsg: Message = { role: "assistant", content: reply };
+        setMessages((prev) => [...prev, assistantMsg]);
+
+        if (fromVoice || isVoiceMode) {
+          setTimeout(() => speak(reply), 100);
+        }
+      } catch (err: any) {
+        const errMsg: Message = { role: "assistant", content: `⚠️ Error: ${err.message}` };
+        setMessages((prev) => [...prev, errMsg]);
+        if (fromVoice || isVoiceMode) setIsListening(false);
+      } finally {
+        setIsLoading(false);
+        setPulseActive(false);
       }
-    }, 100);
+    },
+    [messages, isLoading, isVoiceMode, speak]
+  );
 
-    toast.info("Entering Live Voice Mode. Connect your microphone.");
-  };
-
-  // Exit Live Voice Mode
-  const handleExitVoiceMode = () => {
-    setIsVoiceMode(false);
-    setVoiceState("idle");
-    stopSpeechRecognitionOnly();
-    stopSpeechSynthesis();
-    toast.info("Returned to text chat dashboard.");
-  };
-
-  // Toggle Mute
-  const handleToggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    
-    if (nextMuted) {
-      stopSpeechRecognitionOnly();
-      setVoiceState("listening");
-      setVoiceTranscript("");
-      setInterimTranscript("");
-      toast.info("Microphone muted.");
+  const toggleVoiceMode = () => {
+    if (isVoiceMode) {
+      synthRef.current?.cancel();
+      recognitionRef.current?.stop();
+      setIsVoiceMode(false);
+      setIsListening(false);
+      setIsSpeaking(false);
+      setTranscript("");
     } else {
-      toast.info("Microphone active.");
-      setTimeout(() => {
-        startSpeechRecognition();
-      }, 100);
+      setIsVoiceMode(true);
+      setTimeout(() => startListening(), 600);
     }
   };
 
-  // Reset chat thread
-  const handleResetChat = () => {
-    setMessages([
-      {
-        role: "assistant",
-        content: "Operational registers cleared. System calibrated. How can I assist you with Lightstack's architecture today?",
-        timestamp: new Date()
-      }
-    ]);
-    stopSpeechSynthesis();
-    toast.success("Chat history cleared.");
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-100px)] py-32 bg-white text-[#001c4a] relative overflow-hidden font-sans">
-      {/* Immersive Voice Mode Overlay */}
-      <AnimatePresence>
-        {isVoiceMode && (
-          <motion.div
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="fixed inset-0 z-50 overflow-hidden"
-          >
-            <AIVoiceVisualizer
-              state={voiceState}
-              transcript={voiceState === "speaking" ? voiceTranscript : (voiceTranscript || interimTranscript)}
-              interimTranscript={voiceState === "listening" ? interimTranscript : ""}
-              onStop={handleExitVoiceMode}
-              isMuted={isMuted}
-              onToggleMute={handleToggleMute}
-              voiceVolume={voiceVolume}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div style={{
+      fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+      background: "#090a15",
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      color: "#e8eaf0",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Background glow */}
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        background: "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, rgba(16,185,129,0.07) 0%, transparent 60%)",
+      }} />
 
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10">
-        
-        {/* Main Header grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end mb-16">
-          <div className="lg:col-span-8">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="h-[2px] w-12 bg-primary"></span>
-              <span className="text-xs font-bold uppercase tracking-[0.3em] text-primary">
-                Virtual AI Consultant
-              </span>
-            </div>
-            <h2 className="text-5xl md:text-8xl font-black leading-[0.9] tracking-tighter uppercase">
-              TALK TO <span className="text-primary">ALETHEIA.</span>
-            </h2>
-          </div>
-
-          <div className="lg:col-span-4 flex justify-start lg:justify-end gap-4">
-            {/* Live voice mode button */}
-            <button
-              onClick={handleEnterVoiceMode}
-              className="flex items-center gap-3 px-6 py-4 bg-primary text-white font-black text-xs uppercase tracking-widest hover:bg-primary/95 transition-all active:scale-95 shadow-md shadow-primary/20"
-            >
-              <Mic className="w-4 h-4" /> Live Voice Mode
-            </button>
+      {/* Header */}
+      <header style={{
+        position: "relative", zIndex: 10,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "16px 24px",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(9,10,21,0.8)",
+        backdropFilter: "blur(12px)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: "linear-gradient(135deg, #6366f1 0%, #10b981 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 0 16px rgba(99,102,241,0.4)",
+            fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: -1,
+          }}>L</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px", color: "#f0f1f8" }}>Lightstack AI</div>
+            <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 500, letterSpacing: "0.5px" }}>ENGINEERING BEYOND CODE</div>
           </div>
         </div>
 
-        {/* Main Chat Workspace */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Left Block: Chat Feed */}
-          <div className="lg:col-span-8 flex flex-col border border-border min-h-[550px] max-h-[700px] bg-muted/[0.05]">
-            
-            {/* Chat header */}
-            <div className="px-6 py-4 border-b border-border bg-white flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                <span className="text-[10px] font-black uppercase tracking-widest">Active Consultation Session</span>
-              </div>
-
-              <button
-                onClick={handleResetChat}
-                className="text-muted-foreground hover:text-red-500 transition-colors"
-                title="Clear Consultation Registers"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Message scroll list */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
-              {messages.map((m, idx) => {
-                const isAssistant = m.role === "assistant";
-                return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.25) }}
-                    className={`flex gap-4 ${isAssistant ? "justify-start" : "justify-end"}`}
-                  >
-                    {isAssistant && (
-                      <div className="w-8 h-8 flex-shrink-0 bg-primary text-white flex items-center justify-center font-bold text-xs select-none">
-                        A
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-1 max-w-[80%]">
-                      <div
-                        className={`p-5 text-sm md:text-base leading-relaxed ${
-                          isAssistant
-                            ? "bg-white border border-border text-foreground font-medium"
-                            : "bg-primary text-white font-medium"
-                        }`}
-                      >
-                        <p className="whitespace-pre-line">{m.content}</p>
-                      </div>
-                      <span className={`text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mt-1 ${isAssistant ? "text-left" : "text-right"}`}>
-                        {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    {!isAssistant && (
-                      <div className="w-8 h-8 flex-shrink-0 bg-foreground text-background flex items-center justify-center font-bold text-xs select-none">
-                        U
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-              {isSending && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex gap-4 justify-start"
-                >
-                  <div className="w-8 h-8 flex-shrink-0 bg-primary text-white flex items-center justify-center font-bold text-xs animate-pulse select-none">
-                    A
-                  </div>
-                  <div className="p-5 bg-white border border-border max-w-[80%] flex items-center gap-1.5 min-w-[80px] justify-center">
-                    <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                    <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                    <span className="h-2 w-2 bg-primary rounded-full animate-bounce"></span>
-                  </div>
-                </motion.div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Bar */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitQuery(inputText);
-              }}
-              className="p-4 border-t border-border bg-white flex gap-4 items-center"
-            >
-              <button
-                type="button"
-                onClick={handleEnterVoiceMode}
-                className="p-4 border border-border hover:bg-muted text-primary hover:text-primary-foreground transition-all flex-shrink-0 active:scale-95"
-                title="Enter voice consultation mode"
-              >
-                <Mic className="w-5 h-5" />
-              </button>
-
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Query Aletheia about systems, ADLC framework, mobile app capabilities..."
-                className="flex-1 px-4 py-4 border border-border text-sm focus:outline-none focus:border-primary rounded-none h-14 bg-muted/10 font-medium"
-                disabled={isSending}
-              />
-
-              <button
-                type="submit"
-                disabled={isSending || !inputText.trim()}
-                className="px-6 py-4 bg-primary text-white font-black text-xs uppercase tracking-widest hover:bg-primary/95 transition-all h-14 flex-shrink-0 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-              >
-                Send <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Status dot */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#94a3b8" }}>
+            <div style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: isLoading ? "#f59e0b" : "#10b981",
+              boxShadow: `0 0 6px ${isLoading ? "#f59e0b" : "#10b981"}`,
+            }} />
+            {isLoading ? "Thinking…" : isListening ? "Listening…" : isSpeaking ? "Speaking…" : "Ready"}
           </div>
 
-          {/* Right Block: Capabilities & Suggestions Cards */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            {/* Quick Consultation Prompt Chips */}
-            <div className="border border-border p-6 md:p-8 bg-white flex flex-col gap-6">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#001c4a]/50 flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-primary" /> SUGGESTED SUBJECTS
-              </h3>
-              <div className="flex flex-col gap-3">
-                {SUGGESTIONS.map((s, idx) => (
+          {/* Voice Mode Toggle */}
+          <button
+            onClick={toggleVoiceMode}
+            style={{
+              padding: "7px 16px", borderRadius: 20, border: "none", cursor: "pointer",
+              fontWeight: 600, fontSize: 12, letterSpacing: "0.3px",
+              background: isVoiceMode
+                ? "linear-gradient(135deg, #6366f1, #10b981)"
+                : "rgba(255,255,255,0.06)",
+              color: isVoiceMode ? "#fff" : "#94a3b8",
+              boxShadow: isVoiceMode ? "0 0 16px rgba(99,102,241,0.35)" : "none",
+              transition: "all 0.3s ease",
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            <span style={{ fontSize: 14 }}>{isVoiceMode ? "🎙️" : "🔇"}</span>
+            {isVoiceMode ? "Voice Mode ON" : "Voice Mode"}
+          </button>
+        </div>
+      </header>
+
+      {/* Voice Mode Overlay */}
+      {isVoiceMode && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          background: "rgba(9,10,21,0.96)",
+          backdropFilter: "blur(20px)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: 32,
+        }}>
+          {/* Animated orb */}
+          <div style={{ position: "relative", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {/* Outer rings */}
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{
+                position: "absolute",
+                width: 180 + i * 40,
+                height: 180 + i * 40,
+                borderRadius: "50%",
+                border: `1px solid rgba(99,102,241,${0.15 - i * 0.04})`,
+                animation: `ringPulse ${1.2 + i * 0.3}s ease-in-out infinite`,
+                animationDelay: `${i * 0.15}s`,
+              }} />
+            ))}
+            {/* Core orb */}
+            <div style={{
+              width: 120, height: 120, borderRadius: "50%",
+              background: isListening
+                ? "radial-gradient(circle, #10b981 0%, #059669 60%, #064e3b 100%)"
+                : isSpeaking
+                ? "radial-gradient(circle, #6366f1 0%, #4f46e5 60%, #1e1b4b 100%)"
+                : "radial-gradient(circle, #334155 0%, #1e293b 100%)",
+              boxShadow: isListening
+                ? "0 0 40px rgba(16,185,129,0.5), 0 0 80px rgba(16,185,129,0.2)"
+                : isSpeaking
+                ? "0 0 40px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2)"
+                : "0 0 20px rgba(0,0,0,0.5)",
+              transition: "all 0.4s ease",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 36,
+              animation: (isListening || isSpeaking) ? "orbPulse 1.5s ease-in-out infinite" : "none",
+            }}>
+              {isListening ? "🎤" : isSpeaking ? "🔊" : isLoading ? "⚡" : "💬"}
+            </div>
+          </div>
+
+          {/* Waveform */}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, height: 48 }}>
+            {waveValues.map((h, i) => (
+              <div key={i} style={{
+                width: 3, borderRadius: 2,
+                height: `${h}px`,
+                background: isListening
+                  ? `rgba(16,185,129,${0.5 + (h / 36) * 0.5})`
+                  : isSpeaking
+                  ? `rgba(99,102,241,${0.5 + (h / 36) * 0.5})`
+                  : "rgba(148,163,184,0.2)",
+                transition: "height 0.08s ease",
+              }} />
+            ))}
+          </div>
+
+          {/* Status label */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              fontSize: 20, fontWeight: 600, color: "#f0f1f8", marginBottom: 8,
+              letterSpacing: "-0.3px",
+            }}>
+              {isListening ? "Listening…" : isSpeaking ? "Speaking…" : isLoading ? "Processing…" : "Tap mic to speak"}
+            </div>
+            {transcript && (
+              <div style={{
+                fontSize: 14, color: "#94a3b8", maxWidth: 400, textAlign: "center",
+                background: "rgba(255,255,255,0.04)", padding: "10px 20px", borderRadius: 12,
+              }}>
+                {transcript}
+              </div>
+            )}
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: "flex", gap: 16 }}>
+            <button
+              onClick={() => isListening ? stopListening() : startListening()}
+              disabled={isLoading || isSpeaking}
+              style={{
+                width: 60, height: 60, borderRadius: "50%", border: "none",
+                cursor: isLoading || isSpeaking ? "not-allowed" : "pointer",
+                background: isListening
+                  ? "linear-gradient(135deg, #ef4444, #b91c1c)"
+                  : "linear-gradient(135deg, #10b981, #059669)",
+                boxShadow: isListening ? "0 0 24px rgba(239,68,68,0.4)" : "0 0 24px rgba(16,185,129,0.4)",
+                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: isLoading || isSpeaking ? 0.4 : 1,
+                transition: "all 0.2s",
+              }}
+            >
+              {isListening ? "⏹" : "🎤"}
+            </button>
+
+            <button
+              onClick={() => { synthRef.current?.cancel(); setIsSpeaking(false); }}
+              disabled={!isSpeaking}
+              style={{
+                width: 60, height: 60, borderRadius: "50%", border: "none",
+                cursor: isSpeaking ? "pointer" : "not-allowed",
+                background: "rgba(255,255,255,0.06)",
+                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: isSpeaking ? 1 : 0.3,
+                transition: "all 0.2s",
+              }}
+            >
+              🔇
+            </button>
+
+            <button
+              onClick={toggleVoiceMode}
+              style={{
+                width: 60, height: 60, borderRadius: "50%",
+                cursor: "pointer",
+                background: "rgba(239,68,68,0.15)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {voiceError && (
+            <div style={{ color: "#f87171", fontSize: 13, background: "rgba(239,68,68,0.1)", padding: "8px 16px", borderRadius: 8 }}>
+              {voiceError}
+            </div>
+          )}
+
+          {/* Last message preview */}
+          {messages.length > 1 && (
+            <div style={{
+              position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)",
+              maxWidth: 500, width: "90%",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 16, padding: "14px 18px",
+            }}>
+              <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600, marginBottom: 6, letterSpacing: "0.5px" }}>LAST RESPONSE</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>
+                {messages[messages.length - 1].role === "assistant"
+                  ? messages[messages.length - 1].content.slice(0, 120) + (messages[messages.length - 1].content.length > 120 ? "…" : "")
+                  : "—"}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chat messages */}
+      <div style={{
+        flex: 1, overflowY: "auto", padding: "20px 16px",
+        position: "relative", zIndex: 5,
+        scrollbarWidth: "thin", scrollbarColor: "rgba(99,102,241,0.2) transparent",
+      }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          {messages.map((msg, i) => (
+            <div key={i} style={{
+              display: "flex",
+              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+              gap: 10,
+              alignItems: "flex-end",
+            }}>
+              {msg.role === "assistant" && (
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                  background: "linear-gradient(135deg, #6366f1, #10b981)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 800, color: "#fff",
+                }}>L</div>
+              )}
+              <div style={{
+                maxWidth: "78%",
+                padding: "11px 15px",
+                borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                background: msg.role === "user"
+                  ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
+                  : "rgba(255,255,255,0.05)",
+                border: msg.role === "user" ? "none" : "1px solid rgba(255,255,255,0.07)",
+                fontSize: 14, lineHeight: 1.6,
+                color: msg.role === "user" ? "#fff" : "#d1d5db",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                boxShadow: msg.role === "user"
+                  ? "0 4px 16px rgba(99,102,241,0.25)"
+                  : "none",
+              }}>
+                {msg.content}
+                {msg.role === "assistant" && (
                   <button
-                    key={idx}
-                    onClick={() => {
-                      setInputText(s.query);
-                      submitQuery(s.query);
+                    onClick={() => speak(msg.content)}
+                    style={{
+                      marginLeft: 8, background: "none", border: "none",
+                      color: "#4b5563", cursor: "pointer", fontSize: 13,
+                      padding: 2, borderRadius: 4,
+                      verticalAlign: "middle",
+                      opacity: 0.6,
                     }}
-                    className="w-full text-left p-4 border border-border hover:border-primary bg-muted/5 hover:bg-primary/[0.02] text-xs font-bold text-foreground leading-relaxed uppercase tracking-wider flex items-center justify-between gap-3 group transition-all"
-                  >
-                    <span>{s.label}</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors flex-shrink-0" />
-                  </button>
+                    title="Read aloud"
+                  >🔊</button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: "linear-gradient(135deg, #6366f1, #10b981)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 13, fontWeight: 800, color: "#fff",
+              }}>L</div>
+              <div style={{
+                padding: "12px 18px", borderRadius: "18px 18px 18px 4px",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                display: "flex", gap: 5, alignItems: "center",
+              }}>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: "#6366f1",
+                    animation: `dotBounce 1.2s ease-in-out infinite`,
+                    animationDelay: `${i * 0.2}s`,
+                  }} />
                 ))}
               </div>
             </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
 
-            {/* Corporate Tech Rigor Panel */}
-            <div className="bg-foreground text-background p-8 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
-              
-              <div className="relative z-10 space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.25em] text-primary flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" /> ALETHEIA GROUNDING
-                </h3>
-                
-                <p className="text-xs text-white/50 leading-relaxed font-medium">
-                  Aletheia is grounded on the Lightstack corporate index. She answers with rigorous technical specifications and architectural details based on live services active on lightstackgroup.com.
-                </p>
+      {/* Input bar */}
+      <div style={{
+        position: "relative", zIndex: 10,
+        padding: "12px 16px 16px",
+        background: "rgba(9,10,21,0.9)",
+        backdropFilter: "blur(16px)",
+        borderTop: "1px solid rgba(255,255,255,0.05)",
+      }}>
+        {voiceError && !isVoiceMode && (
+          <div style={{ color: "#f87171", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{voiceError}</div>
+        )}
+        <div style={{
+          maxWidth: 720, margin: "0 auto",
+          display: "flex", gap: 10, alignItems: "flex-end",
+        }}>
+          {/* Voice mic button */}
+          <button
+            onClick={() => isListening ? stopListening() : startListening()}
+            disabled={isLoading || isSpeaking}
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              cursor: isLoading ? "not-allowed" : "pointer", flexShrink: 0,
+              background: isListening
+                ? "linear-gradient(135deg, #ef4444, #b91c1c)"
+                : "rgba(255,255,255,0.06)",
+              border: isListening ? "none" : "1px solid rgba(255,255,255,0.1)",
+              fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: isListening ? "0 0 16px rgba(239,68,68,0.4)" : "none",
+              transition: "all 0.2s",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            {isListening ? "⏹" : "🎤"}
+          </button>
 
-                <div className="h-px bg-white/10 my-4"></div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-white/5 flex items-center justify-center border border-white/5">
-                      <Cpu className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black uppercase text-white/40">CORE STACK</div>
-                      <div className="text-xs font-black text-white uppercase tracking-wider">Governed Agentic AI</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-white/5 flex items-center justify-center border border-white/5">
-                      <Layers className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black uppercase text-white/40">FRAMEWORK</div>
-                      <div className="text-xs font-black text-white uppercase tracking-wider">ADLC Orchestrations</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-white/5 flex items-center justify-center border border-white/5">
-                      <Smartphone className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black uppercase text-white/40">ARCHITECTURES</div>
-                      <div className="text-xs font-black text-white uppercase tracking-wider">Offline-First Mobile</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Text input */}
+          <div style={{
+            flex: 1, position: "relative",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 14, overflow: "hidden",
+            transition: "border-color 0.2s",
+          }}>
+            <textarea
+              ref={inputRef}
+              value={isListening ? transcript : input}
+              onChange={(e) => !isListening && setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isListening ? "Listening…" : "Ask Lightstack AI anything…"}
+              rows={1}
+              disabled={isLoading || isListening}
+              style={{
+                width: "100%", background: "transparent", border: "none",
+                outline: "none", resize: "none", padding: "11px 14px",
+                fontSize: 14, color: "#e2e8f0", lineHeight: 1.5,
+                fontFamily: "inherit", boxSizing: "border-box",
+                caretColor: "#6366f1",
+                opacity: isListening ? 0.7 : 1,
+              }}
+            />
           </div>
 
+          {/* Send */}
+          <button
+            onClick={() => sendMessage(isListening ? transcript : input)}
+            disabled={isLoading || (!input.trim() && !transcript.trim())}
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              cursor: isLoading ? "not-allowed" : "pointer", flexShrink: 0,
+              background: input.trim() || transcript.trim()
+                ? "linear-gradient(135deg, #6366f1, #4f46e5)"
+                : "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: input.trim() ? "0 0 16px rgba(99,102,241,0.3)" : "none",
+              transition: "all 0.2s",
+              opacity: isLoading || (!input.trim() && !transcript.trim()) ? 0.4 : 1,
+            }}
+          >
+            ↑
+          </button>
         </div>
 
+        <div style={{ textAlign: "center", fontSize: 11, color: "#334155", marginTop: 8 }}>
+          Powered by <span style={{ color: "#6366f1" }}>Lightstack Group</span> · lightstackgroup.com
+        </div>
       </div>
+
+      <style>{`
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
+        }
+        @keyframes ringPulse {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 2px; }
+      `}</style>
     </div>
   );
 }
+
+export default AIAgentChat;

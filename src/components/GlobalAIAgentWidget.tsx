@@ -7,7 +7,6 @@ import {
 import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
-
 const MODEL = "claude-sonnet-4-20250514";
 const API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -227,7 +226,7 @@ export function GlobalAIAgentWidget() {
 
     try {
       const history = messages.map(m => ({
-        role: m.role,
+        role: m.role === "system" ? "assistant" : m.role,
         content: m.content
       })).slice(-12);
       history.push({ role: "user", content: queryText });
@@ -236,7 +235,7 @@ export function GlobalAIAgentWidget() {
         ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
         : "");
 
-      const response = await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -244,15 +243,15 @@ export function GlobalAIAgentWidget() {
           max_tokens: isVoiceMode ? 150 : 600,
           system: sysPrompt,
           messages: history,
-        })
+        }),
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `API error ${response.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `API error ${res.status}`);
       }
 
-      const data = await response.json();
+      const data = await res.json();
       const replyContent = data.content?.find((b: any) => b.type === "text")?.text || "I didn't get a response. Please try again.";
 
       const assistantMessage: Message = {
@@ -269,17 +268,16 @@ export function GlobalAIAgentWidget() {
     } catch (err: any) {
       console.error("Widget API Error:", err);
       
-      const offlineReply = getOfflineSimulationResponse(queryText);
-      const simulationMessage: Message = {
+      const errorMessage: Message = {
         role: "assistant",
-        content: `[Offline Simulation Mode - pre-configured AI connection issue.]\n\n${offlineReply}`,
+        content: `⚠️ API Connection Error: ${err.message || "Failed to reach OpenRouter API. Please check your network connection or API key."}`,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, simulationMessage]);
-      toast.warning("API connection issue. Switch to simulation mode.");
+      setMessages(prev => [...prev, errorMessage]);
+      toast.error(`API Error: ${err.message || "Connection failed"}`);
       
       if (isVoiceMode) {
-        speakText(offlineReply);
+        speakText("I encountered an error connecting to the online system. Please check your API key or network connection.");
       }
     } finally {
       setIsSending(false);
