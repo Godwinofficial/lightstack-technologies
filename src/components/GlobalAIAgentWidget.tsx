@@ -7,7 +7,7 @@ import {
 import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
-import { OPEN_ROUTER_API_KEY, API_URL, MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
+import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
 
 const MINI_SUGGESTIONS = [
   { label: "What is the ADLC framework?", query: "Can you explain Lightstack's ADLC framework for Agentic AI?" },
@@ -210,16 +210,16 @@ export function GlobalAIAgentWidget() {
 
       for (let i = 0; i <= retries; i++) {
         try {
-          res = await fetch(API_URL, {
+          res = await fetch(GROQ_URL, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
+              "Authorization": `Bearer ${GROQ_API_KEY}`,
               "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
               "X-Title": "Lumina AI"
             },
             body: JSON.stringify({
-              model: MODEL,
+              model: GROQ_MODEL,
               messages: openRouterMessages,
               max_tokens: isVoiceMode ? 150 : 600,
               temperature: 0.7,

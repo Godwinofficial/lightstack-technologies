@@ -1,6 +1,11 @@
-export const OPEN_ROUTER_API_KEY = import.meta.env.VITE_OPEN_ROUTER_API_KEY || "";
-export const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-export const MODEL = "google/gemma-4-26b-a4b-it:free";
+export const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
+export const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+export const GROQ_MODEL = "openai/gpt-oss-20b";
+export const FALLBACK_MODELS = [
+	"openai/gpt-oss-120b",
+	"meta-llama/llama-4-scout-17b-16e-instruct",
+	"deepseek-r1-distill-llama-70b",
+];
 
 export const LIGHTSTACK_CONTEXT = `You are the official AI assistant for Lightstack Group (lightstackgroup.com). You are knowledgeable, professional, and helpful.
 

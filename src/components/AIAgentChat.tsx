@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { OPEN_ROUTER_API_KEY, API_URL, MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
+import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, FALLBACK_MODELS, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
 
 const VOICES_PREFERRED = ["Google UK English Male", "Google US English", "Microsoft David", "Alex"];
 
@@ -167,78 +167,16 @@ export function AIAgentChat() {
 
       try {
         const history = [...messages, userMsg].slice(-12);
-        const sysPrompt = LIGHTSTACK_CONTEXT + (fromVoice || isVoiceMode
-          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
-          : "");
-
-        const openRouterMessages = [];
-        if (sysPrompt) {
-          openRouterMessages.push({ role: "system", content: sysPrompt });
-        }
-        history.forEach(msg => {
-          openRouterMessages.push({ role: msg.role, content: msg.content });
-        });
-
-        let res: Response | null = null;
-        let retries = 3;
-        let delay = 1000;
-
-        for (let i = 0; i <= retries; i++) {
-          try {
-            res = await fetch(API_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${OPEN_ROUTER_API_KEY}`,
-                "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
-                "X-Title": "Lumina AI"
-              },
-              body: JSON.stringify({
-                model: MODEL,
-                messages: openRouterMessages,
-                max_tokens: fromVoice || isVoiceMode ? 150 : 600,
-                temperature: 0.7,
-              }),
-            });
-
-            if (res.status === 429 && i < retries) {
-              console.warn(`[API] Rate limited (429). Retrying in ${delay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-              delay *= 2; // exponential backoff
-              continue;
-            }
-            break;
-          } catch (fetchErr) {
-            if (i === retries) throw fetchErr;
-            console.warn(`[API] Network error. Retrying in ${delay}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
-          }
-        }
-
-        let reply = "";
-        if (!res || !res.ok) {
-          console.warn(`[API] OpenRouter rate-limited or failed (Status: ${res?.status || "unknown"}). Activating offline fallback.`);
-          reply = getOfflineSimulationResponse(text);
-        } else {
-          const data = await res.json();
-          reply = data.choices?.[0]?.message?.content || "No response received.";
-        }
-
-        const assistantMsg: Message = { role: "assistant", content: reply };
+        const assistantReply = await fetchAIResponse(text, history, fromVoice);
+        const assistantMsg: Message = { role: "assistant", content: assistantReply };
         setMessages((prev) => [...prev, assistantMsg]);
-
-        if (fromVoice || isVoiceMode) {
-          setTimeout(() => speak(reply), 100);
-        }
+        if (fromVoice || isVoiceMode) setTimeout(() => speak(assistantReply), 100);
       } catch (err: any) {
         console.error("Widget API Error:", err);
         const fallbackReply = getOfflineSimulationResponse(text);
         const fallbackMsg: Message = { role: "assistant", content: fallbackReply };
         setMessages((prev) => [...prev, fallbackMsg]);
-        if (fromVoice || isVoiceMode) {
-          setTimeout(() => speak(fallbackReply), 100);
-        }
+        if (fromVoice || isVoiceMode) setTimeout(() => speak(fallbackReply), 100);
       } finally {
         setIsLoading(false);
         setPulseActive(false);
@@ -246,6 +184,124 @@ export function AIAgentChat() {
     },
     [messages, isLoading, isVoiceMode, speak]
   );
+
+  // Helper: call OpenRouter (or fallback) with retries and consistent params
+  const currentModelRef = useRef<string>(GROQ_MODEL);
+
+  const fetchAIResponse = useCallback(async (userMessageText: string, history: Message[], fromVoice = false) => {
+    const sysPrompt = LIGHTSTACK_CONTEXT + (fromVoice || isVoiceMode
+      ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
+      : "");
+
+    const messagesForApi: Array<{ role: string; content: string }> = [];
+    if (sysPrompt) messagesForApi.push({ role: "system", content: sysPrompt });
+    history.forEach((m) => messagesForApi.push({ role: m.role, content: m.content }));
+
+    const modelCandidates = [currentModelRef.current, ...FALLBACK_MODELS.filter(m => m !== currentModelRef.current)];
+
+    for (const modelCandidate of modelCandidates) {
+      const requestBody = {
+        model: modelCandidate,
+        messages: messagesForApi,
+        temperature: 0.7,
+        max_tokens: fromVoice || isVoiceMode ? 150 : 600,
+        top_p: 0.9,
+        frequency_penalty: 0.2,
+        presence_penalty: 0.2,
+      } as any;
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000);
+
+        const res = await fetch(GROQ_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          let errorDetail = `HTTP ${res.status}`;
+          try {
+            const errJson = await res.json();
+            errorDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+          } catch (e) {}
+
+          // If model-specific error, try next candidate
+          const lower = (errorDetail || "").toLowerCase();
+          if (lower.includes('decommissioned') || lower.includes('not found') || lower.includes('model')) {
+            // try next modelCandidate
+            continue;
+          }
+
+          // non-model error -> fallback
+          console.warn('Groq API non-ok:', errorDetail);
+          return getOfflineSimulationResponse(userMessageText);
+        }
+
+        const data = await res.json();
+        let assistantReply: string | undefined = undefined;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          assistantReply = data.choices[0].message.content;
+        } else if (data.output_text) {
+          assistantReply = data.output_text;
+        }
+
+        if (assistantReply) {
+          currentModelRef.current = modelCandidate; // persist working model
+          return assistantReply;
+        }
+
+        // if structure unexpected, try next candidate
+        continue;
+      } catch (err: any) {
+        // network or abort: if abort, treat as timeout; otherwise try next model once
+        if (err.name === 'AbortError') throw new Error('Request timeout. Please try again.');
+        // else continue to next candidate
+        continue;
+      }
+    }
+
+    // all models failed — return offline simulation
+    return getOfflineSimulationResponse(userMessageText);
+  }, [isVoiceMode]);
+
+  // Reset conversation
+  const resetConversation = useCallback(() => {
+    if (isLoading) return;
+    const welcome = "✨ New session started! I'm Lightstack's AI assistant. How can I help today?";
+    setMessages([{ role: "assistant", content: welcome }]);
+    setInput("");
+  }, [isLoading]);
+
+  // silent health check on mount
+  useEffect(() => {
+    const silentHealthCheck = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const testRes = await fetch(GROQ_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({ model: GROQ_MODEL, messages: [{ role: "user", content: "ping" }], max_tokens: 5 }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (!testRes.ok) console.warn("Groq health-check: non-ok response");
+      } catch (e) {
+        // non-critical
+      }
+    };
+    silentHealthCheck();
+  }, []);
 
   const toggleVoiceMode = () => {
     if (isVoiceMode) {
