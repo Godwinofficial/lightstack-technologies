@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute } from "@tanstack/react-router";
 import { GlobalAIAgentWidget } from "@/components/GlobalAIAgentWidget";
+import { TestAIAgentWidget } from "@/components/TestAIAgentWidget";
 
 function NotFoundComponent() {
   return (
@@ -33,6 +34,7 @@ function RootComponent() {
     <>
       <Outlet />
       <GlobalAIAgentWidget />
+      <TestAIAgentWidget />
     </>
   );
 }
