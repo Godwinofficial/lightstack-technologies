@@ -14,6 +14,15 @@ interface Message {
   timestamp: Date;
 }
 
+const sanitizeForDisplay = (text: string) =>
+  text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
 export function GlobalAIAgentWidget() {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -478,7 +487,7 @@ export function GlobalAIAgentWidget() {
                               : "bg-primary text-white font-medium"
                           }`}
                         >
-                          <p className="whitespace-pre-line">{m.content}</p>
+                          <p className="whitespace-pre-line">{sanitizeForDisplay(m.content)}</p>
                         </div>
                         {isAssistant && (
                           <button

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Volume2 } from "lucide-react";
 import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, FALLBACK_MODELS, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
 
 const VOICES_PREFERRED = ["Google UK English Male", "Google US English", "Microsoft David", "Alex"];
@@ -7,6 +8,15 @@ interface Message {
   role: "user" | "assistant";
   content: string;
 }
+
+const sanitizeForDisplay = (text: string) =>
+  text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
 export const getOfflineSimulationResponse = (query: string): string => {
   const q = query.toLowerCase();
@@ -436,9 +446,10 @@ export function AIAgentChat() {
                 flexDirection: "column",
                 gap: 8,
               }}>
-                <div>{msg.content}</div>
+                <div>{sanitizeForDisplay(msg.content)}</div>
                 {msg.role === "assistant" && (
                   <button
+                    type="button"
                     onClick={() => speak(msg.content)}
                     style={{
                       alignSelf: "flex-end",
@@ -455,10 +466,11 @@ export function AIAgentChat() {
                       fontSize: 14,
                       padding: 0,
                       opacity: 0.8,
+                      touchAction: "manipulation",
                     }}
                     title="Read response aloud"
                     aria-label="Read response aloud"
-                  >🔊</button>
+                  ><Volume2 className="w-4 h-4" /></button>
                 )}
               </div>
             </div>
