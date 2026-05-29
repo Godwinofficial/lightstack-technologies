@@ -7,8 +7,8 @@ import {
 import { AIVoiceVisualizer } from "./AIVoiceVisualizer";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
-const MODEL = "claude-sonnet-4-20250514";
-const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "anthropic/claude-3.5-sonnet";
+const API_URL = "/api/chat";
 
 const LIGHTSTACK_CONTEXT = `You are the official AI assistant for Lightstack Group (lightstackgroup.com). You are knowledgeable, professional, and helpful.
 
@@ -235,24 +235,35 @@ export function GlobalAIAgentWidget() {
         ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
         : "");
 
+      const openRouterMessages = [];
+      if (sysPrompt) {
+        openRouterMessages.push({ role: "system", content: sysPrompt });
+      }
+      history.forEach(msg => {
+        openRouterMessages.push({ role: msg.role, content: msg.content });
+      });
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: MODEL,
           max_tokens: isVoiceMode ? 150 : 600,
-          system: sysPrompt,
-          messages: history,
+          messages: openRouterMessages,
         }),
       });
 
-      if (!res.ok) {
+      let replyContent = "";
+      if (res.status === 404) {
+        console.warn("API returned 404. Falling back to offline simulation in local development.");
+        replyContent = getOfflineSimulationResponse(queryText);
+      } else if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error?.message || `API error ${res.status}`);
+      } else {
+        const data = await res.json();
+        replyContent = data.choices?.[0]?.message?.content || "No response received.";
       }
-
-      const data = await res.json();
-      const replyContent = data.content?.find((b: any) => b.type === "text")?.text || "I didn't get a response. Please try again.";
 
       const assistantMessage: Message = {
         role: "assistant",
