@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Volume2 } from "lucide-react";
-import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, FALLBACK_MODELS, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
+import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, FALLBACK_MODELS, LIGHTSTACK_CONTEXT, isOffTopicQuery, OFF_TOPIC_REFUSAL_RESPONSE } from "../lib/aiKnowledge";
 
 const VOICES_PREFERRED = ["Google UK English Male", "Google US English", "Microsoft David", "Alex"];
 
@@ -19,6 +19,9 @@ const sanitizeForDisplay = (text: string) =>
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
 export const getOfflineSimulationResponse = (query: string): string => {
+  if (isOffTopicQuery(query)) {
+    return OFF_TOPIC_REFUSAL_RESPONSE;
+  }
   const q = query.toLowerCase();
   if (q.includes("adlc") || q.includes("framework") || q.includes("agentic")) {
     return "Our Agentic AI systems are engineered using our proprietary ADLC (Agentic Development Life Cycle) framework. This guided deployment methodology ensures governed, production-grade AI agents with multi-agent orchestrations, structural guardrails, and low hallucination rates to solve complex reasoning tasks.";
@@ -176,8 +179,13 @@ export function AIAgentChat() {
       setPulseActive(true);
 
       try {
-        const history = [...messages, userMsg].slice(-12);
-        const assistantReply = await fetchAIResponse(text, history, fromVoice);
+        let assistantReply: string;
+        if (isOffTopicQuery(text)) {
+          assistantReply = OFF_TOPIC_REFUSAL_RESPONSE;
+        } else {
+          const history = [...messages, userMsg].slice(-12);
+          assistantReply = await fetchAIResponse(text, history, fromVoice);
+        }
         const assistantMsg: Message = { role: "assistant", content: assistantReply };
         setMessages((prev) => [...prev, assistantMsg]);
         if (fromVoice || isVoiceMode) setTimeout(() => speak(assistantReply), 100);

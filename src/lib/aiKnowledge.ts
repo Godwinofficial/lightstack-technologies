@@ -71,4 +71,51 @@ Under his leadership, LightStack Group has launched and developed projects inclu
 * [AutoHut Zambia](https://autohutzambia.com?utm_source=chatgpt.com)
 
 His long term vision is to position LightStack Group as one of Africa’s emerging innovation driven technology companies focused on scalable digital infrastructure, enterprise systems, and next generation software products.
+
+Strict Guardrails & Focus:
+- You are ONLY permitted to discuss subjects related to software engineering, technology projects, Lightstack Group, its founder Godwin, its services, and portfolios.
+- If asked about off-topic subjects like climate change, marriage, politics, religion, sports, cooking, or entertainment, you must politely decline and state that your function is strictly to help with software engineering and technology inquiries.
 `;
+
+export const OFF_TOPIC_REFUSAL_RESPONSE = "I apologize, but as Lightstack's AI assistant, I am programmed to focus on software development, technology projects, and our engineering services. I cannot discuss off-topic subjects like climate, marriage, or personal lifestyle matters. How can I help you with your software development or technology needs today?";
+
+export function isOffTopicQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  
+  // Define off-topic keywords
+  const offTopicKeywords = [
+    "climate", "global warming", "greenhouse gas", "deforestation", "carbon footprint", "environmentalism",
+    "marriage", "marry", "wedding", "divorce", "dating", "spouse", "husband", "wife", "boyfriend", "girlfriend", "romance", "romantic",
+    "politics", "election", "president", "parliament", "government", "senate", "congress",
+    "religion", "jesus", "allah", "quran", "bible", "buddha", "hindu", "muslim", "christian", "church", "mosque", "temple",
+    "cooking", "recipe", "cook", "bake", "baking", "kitchen", "recipe", "ingredient",
+    "sports", "football", "soccer", "basketball", "baseball", "cricket", "tennis", "olympics",
+    "movie", "celebrity", "actor", "actress", "music", "song", "singer", "pop star", "hollywood"
+  ];
+  
+  // Check if any off-topic keyword matches (matching word boundaries)
+  const hasOffTopicKeyword = offTopicKeywords.some(keyword => {
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(q);
+  });
+  
+  if (!hasOffTopicKeyword) {
+    return false;
+  }
+  
+  // If it has off-topic keywords, check if it's actually a tech/software project inquiry
+  const techKeywords = [
+    "build", "app", "website", "software", "system", "develop", "engineer", "create", "design", 
+    "portfolio", "code", "programming", "project", "portal", "platform", "technology", "application", 
+    "services", "digital", "startup", "dev", "tech", "site"
+  ];
+  
+  const isTechInquiry = techKeywords.some(keyword => {
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(q);
+  });
+  
+  // If it's a tech inquiry, it's NOT off-topic
+  return !isTechInquiry;
+}
+

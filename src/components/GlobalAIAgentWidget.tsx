@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { getOfflineSimulationResponse } from "./AIAgentChat";
 import { toast } from "sonner";
-import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, LIGHTSTACK_CONTEXT } from "../lib/aiKnowledge";
+import { GROQ_API_KEY, GROQ_URL, GROQ_MODEL, LIGHTSTACK_CONTEXT, isOffTopicQuery, OFF_TOPIC_REFUSAL_RESPONSE } from "../lib/aiKnowledge";
 
 interface Message {
   role: "system" | "user" | "assistant";
@@ -175,69 +175,73 @@ export function GlobalAIAgentWidget() {
     }
 
     try {
-      // Build conversation history for the request
-      const history = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })).slice(-12);
-      history.push({ role: "user", content: queryText });
-
-      const sysPrompt = LIGHTSTACK_CONTEXT + (isVoiceMode
-        ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
-        : "");
-
-      const openRouterMessages = [];
-      if (sysPrompt) {
-        openRouterMessages.push({ role: "system", content: sysPrompt });
-      }
-      history.forEach(msg => {
-        openRouterMessages.push({ role: msg.role, content: msg.content });
-      });
-
-      let res: Response | null = null;
-      let retries = 3;
-      let delay = 1000;
-
-      for (let i = 0; i <= retries; i++) {
-        try {
-          res = await fetch(GROQ_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${GROQ_API_KEY}`,
-              "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
-              "X-Title": "Lumina AI"
-            },
-            body: JSON.stringify({
-              model: GROQ_MODEL,
-              messages: openRouterMessages,
-              max_tokens: isVoiceMode ? 150 : 600,
-              temperature: 0.7,
-            }),
-          });
-
-          if (res.status === 429 && i < retries) {
-            console.warn(`[API] Rate limited (429). Retrying in ${delay}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // exponential backoff
-            continue;
-          }
-          break;
-        } catch (fetchErr) {
-          if (i === retries) throw fetchErr;
-          console.warn(`[API] Network error. Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          delay *= 2;
-        }
-      }
-
       let replyContent = "";
-      if (!res || !res.ok) {
-        console.warn(`[API] OpenRouter connection rate-limited or failed (Status: ${res?.status || "unknown"}). Activating offline fallback.`);
-        replyContent = getOfflineSimulationResponse(queryText);
+      if (isOffTopicQuery(queryText)) {
+        replyContent = OFF_TOPIC_REFUSAL_RESPONSE;
       } else {
-        const data = await res.json();
-        replyContent = data.choices?.[0]?.message?.content || "No response received.";
+        // Build conversation history for the request
+        const history = messages.map(m => ({
+          role: m.role,
+          content: m.content
+        })).slice(-12);
+        history.push({ role: "user", content: queryText });
+
+        const sysPrompt = LIGHTSTACK_CONTEXT + (isVoiceMode
+          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response to 1-2 short sentences. No lists, no markdown."
+          : "");
+
+        const openRouterMessages = [];
+        if (sysPrompt) {
+          openRouterMessages.push({ role: "system", content: sysPrompt });
+        }
+        history.forEach(msg => {
+          openRouterMessages.push({ role: msg.role, content: msg.content });
+        });
+
+        let res: Response | null = null;
+        let retries = 3;
+        let delay = 1000;
+
+        for (let i = 0; i <= retries; i++) {
+          try {
+            res = await fetch(GROQ_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://lightstackgroup.com",
+                "X-Title": "Lumina AI"
+              },
+              body: JSON.stringify({
+                model: GROQ_MODEL,
+                messages: openRouterMessages,
+                max_tokens: isVoiceMode ? 150 : 600,
+                temperature: 0.7,
+              }),
+            });
+
+            if (res.status === 429 && i < retries) {
+              console.warn(`[API] Rate limited (429). Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              delay *= 2; // exponential backoff
+              continue;
+            }
+            break;
+          } catch (fetchErr) {
+            if (i === retries) throw fetchErr;
+            console.warn(`[API] Network error. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+          }
+        }
+
+        if (!res || !res.ok) {
+          console.warn(`[API] OpenRouter connection rate-limited or failed (Status: ${res?.status || "unknown"}). Activating offline fallback.`);
+          replyContent = getOfflineSimulationResponse(queryText);
+        } else {
+          const data = await res.json();
+          replyContent = data.choices?.[0]?.message?.content || "No response received.";
+        }
       }
 
       const assistantMessage: Message = {
